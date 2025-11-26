@@ -1,0 +1,6 @@
+@AuthSmith.Api_HostAddress = http://localhost:5058
+
+GET {{AuthSmith.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -9,13 +9,39 @@ using OneOf;
 
 namespace AuthSmith.Application.Services.Roles;
 
+/// <summary>
+/// Service for managing roles and their permission assignments within applications.
+/// </summary>
 public interface IRoleService
 {
+    /// <summary>
+    /// Creates a new role for an application. Returns conflict if role name already exists.
+    /// </summary>
     Task<OneOf<RoleDto, NotFoundError, ConflictError>> CreateAsync(Guid appId, CreateRoleRequestDto request, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Lists all roles for an application.
+    /// </summary>
     Task<OneOf<List<RoleDto>, NotFoundError>> ListAsync(Guid appId, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Retrieves a role by its unique identifier within an application.
+    /// </summary>
     Task<OneOf<RoleDto, NotFoundError>> GetByIdAsync(Guid appId, Guid roleId, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Assigns a permission to a role. Returns conflict if permission is already assigned.
+    /// </summary>
     Task<OneOf<Success, NotFoundError, ConflictError>> AssignPermissionAsync(Guid appId, Guid roleId, Guid permissionId, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Removes a permission from a role.
+    /// </summary>
     Task<OneOf<Success, NotFoundError>> RemovePermissionAsync(Guid appId, Guid roleId, Guid permissionId, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Deletes a role. This will remove the role from all users who have it assigned.
+    /// </summary>
     Task<OneOf<Success, NotFoundError>> DeleteAsync(Guid appId, Guid roleId, CancellationToken cancellationToken = default);
 }
 

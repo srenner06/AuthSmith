@@ -1,3 +1,4 @@
+using AuthSmith.Contracts.Errors;
 using AuthSmith.Domain.Errors;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
@@ -33,16 +34,17 @@ public class FluentValidationFilter : IAsyncActionFilter
             if (!validationResult.IsValid)
             {
                 var validationError = ValidationError.FromFluentValidation(validationResult.Errors);
-                context.Result = new BadRequestObjectResult(new
+                var errorResponse = new ValidationErrorResponseDto
                 {
-                    error = "Validation failed",
-                    errors = validationError.Errors.Select(e => new
+                    Instance = context.HttpContext.Request.Path,
+                    Errors = [.. validationError.Errors.Select(e => new ValidationErrorDetailDto
                     {
-                        propertyName = e.PropertyName,
-                        errorMessage = e.ErrorMessage,
-                        attemptedValue = e.AttemptedValue
-                    })
-                });
+                        PropertyName = e.PropertyName,
+                        ErrorMessage = e.ErrorMessage,
+                        AttemptedValue = e.AttemptedValue
+                    })]
+                };
+                context.Result = new BadRequestObjectResult(errorResponse);
                 return;
             }
         }

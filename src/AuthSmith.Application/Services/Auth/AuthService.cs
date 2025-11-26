@@ -12,11 +12,29 @@ using App = AuthSmith.Domain.Entities.Application;
 
 namespace AuthSmith.Application.Services.Auth;
 
+/// <summary>
+/// Service for user authentication operations including registration, login, and token management.
+/// </summary>
 public interface IAuthService
 {
+    /// <summary>
+    /// Registers a new user for the specified application. Returns authentication tokens on success.
+    /// </summary>
     Task<OneOf<AuthResultDto, NotFoundError, InvalidOperationError>> RegisterAsync(string appKey, RegisterRequestDto request, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Authenticates a user and returns access and refresh tokens.
+    /// </summary>
     Task<OneOf<AuthResultDto, NotFoundError, UnauthorizedError>> LoginAsync(LoginRequestDto request, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Refreshes an access token using a valid refresh token.
+    /// </summary>
     Task<OneOf<AuthResultDto, UnauthorizedError, NotFoundError>> RefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Revokes a refresh token, preventing its future use.
+    /// </summary>
     Task<OneOf<Success, NotFoundError>> RevokeRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
 }
 
@@ -63,41 +81,52 @@ public partial class AuthService : IAuthService
             .FirstOrDefaultAsync(u => u.NormalizedUserName == normalizedUserName || u.NormalizedEmail == normalizedEmail, cancellationToken);
 
         User user;
-        if (existingUser != null)
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
         {
-            user = existingUser;
-            LogExistingUserRegistering(_logger, user.Id, appKey);
-        }
-        else
-        {
-            user = new User
+            if (existingUser != null)
             {
-                UserName = request.Username,
-                NormalizedUserName = normalizedUserName,
-                Email = request.Email,
-                NormalizedEmail = normalizedEmail,
-                PasswordHash = _passwordHasher.HashPassword(request.Password),
-                IsActive = true
-            };
-            _dbContext.Users.Add(user);
-            await _dbContext.SaveChangesAsync(cancellationToken);
-            LogCreatedNewUser(_logger, user.Id, appKey);
-        }
-
-        if (application.DefaultRoleId.HasValue)
-        {
-            var existingRole = await _dbContext.UserRoles
-                .FirstOrDefaultAsync(ur => ur.UserId == user.Id && ur.RoleId == application.DefaultRoleId.Value, cancellationToken);
-
-            if (existingRole == null)
-            {
-                _dbContext.UserRoles.Add(new UserRole
-                {
-                    UserId = user.Id,
-                    RoleId = application.DefaultRoleId.Value
-                });
-                await _dbContext.SaveChangesAsync(cancellationToken);
+                user = existingUser;
+                LogExistingUserRegistering(_logger, user.Id, appKey);
             }
+            else
+            {
+                user = new User
+                {
+                    UserName = request.Username,
+                    NormalizedUserName = normalizedUserName,
+                    Email = request.Email,
+                    NormalizedEmail = normalizedEmail,
+                    PasswordHash = _passwordHasher.HashPassword(request.Password),
+                    IsActive = true
+                };
+                _dbContext.Users.Add(user);
+                await _dbContext.SaveChangesAsync(cancellationToken);
+                LogCreatedNewUser(_logger, user.Id, appKey);
+            }
+
+            if (application.DefaultRoleId.HasValue)
+            {
+                var existingRole = await _dbContext.UserRoles
+                    .FirstOrDefaultAsync(ur => ur.UserId == user.Id && ur.RoleId == application.DefaultRoleId.Value, cancellationToken);
+
+                if (existingRole == null)
+                {
+                    _dbContext.UserRoles.Add(new UserRole
+                    {
+                        UserId = user.Id,
+                        RoleId = application.DefaultRoleId.Value
+                    });
+                    await _dbContext.SaveChangesAsync(cancellationToken);
+                }
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
         }
 
         var authResult = await GenerateAuthResultAsync(user, application, cancellationToken);
@@ -224,41 +253,37 @@ public partial class AuthService : IAuthService
 
     private async Task<OneOf<AuthResultDto, NotFoundError, FileNotFoundError>> GenerateAuthResultAsync(User user, App application, CancellationToken cancellationToken)
     {
-        var roles = await _dbContext.UserRoles
+        // Single query to get roles and role IDs
+        var userRoles = await _dbContext.UserRoles
             .Where(ur => ur.UserId == user.Id)
             .Join(_dbContext.Roles.Where(r => r.ApplicationId == application.Id),
                 ur => ur.RoleId,
                 r => r.Id,
-                (ur, r) => r.Name)
+                (ur, r) => new { r.Id, r.Name })
             .ToListAsync(cancellationToken);
 
-        var roleIds = await _dbContext.UserRoles
-            .Where(ur => ur.UserId == user.Id)
-            .Join(_dbContext.Roles.Where(r => r.ApplicationId == application.Id),
-                ur => ur.RoleId,
-                r => r.Id,
-                (ur, r) => r.Id)
-            .ToListAsync(cancellationToken);
+        var roles = userRoles.Select(r => r.Name).ToList();
+        var roleIds = userRoles.Select(r => r.Id).ToList();
 
-        var permissionsFromRoles = await _dbContext.RolePermissions
+        // Single query to get all permissions (from roles and direct) using Union
+        var permissionsFromRoles = _dbContext.RolePermissions
             .Where(rp => roleIds.Contains(rp.RoleId))
             .Join(_dbContext.Permissions,
                 rp => rp.PermissionId,
                 p => p.Id,
-                (rp, p) => p.Code)
-            .Distinct()
-            .ToListAsync(cancellationToken);
+                (rp, p) => p.Code);
 
-        var directPermissions = await _dbContext.UserPermissions
+        var directPermissions = _dbContext.UserPermissions
             .Where(up => up.UserId == user.Id)
             .Join(_dbContext.Permissions.Where(p => p.ApplicationId == application.Id),
                 up => up.PermissionId,
                 p => p.Id,
-                (up, p) => p.Code)
+                (up, p) => p.Code);
+
+        var allPermissions = await permissionsFromRoles
+            .Union(directPermissions)
             .Distinct()
             .ToListAsync(cancellationToken);
-
-        var allPermissions = permissionsFromRoles.Union(directPermissions).Distinct().ToList();
 
         var accessTokenResult = await _jwtTokenService.GenerateAccessTokenAsync(
             user, application, roles, allPermissions, cancellationToken);

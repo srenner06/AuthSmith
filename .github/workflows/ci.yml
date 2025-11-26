@@ -11,7 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
     
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -24,20 +25,28 @@ jobs:
     - name: Build
       run: dotnet build --no-restore -c Release
     
-    - name: Test
-      run: dotnet test --no-build -c Release --verbosity normal --collect:"XPlat Code Coverage"
+    - name: Run tests with coverage
+      run: |
+        cd tests/AuthSmith.Application.Tests
+        dotnet run --configuration Release --coverage --coverage-output-format cobertura
+        cd ../AuthSmith.Api.Tests
+        dotnet run --configuration Release --coverage --coverage-output-format cobertura
     
-    - name: Upload coverage
+    - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
       with:
-        files: '**/coverage.cobertura.xml'
+        files: |
+          ./tests/AuthSmith.Application.Tests/bin/Release/net10.0/TestResults/*.cobertura.xml
+          ./tests/AuthSmith.Api.Tests/bin/Release/net10.0/TestResults/*.cobertura.xml
         fail_ci_if_error: false
+        token: ${{ secrets.CODECOV_TOKEN }}
 
   lint:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
     
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -47,6 +56,9 @@ jobs:
     - name: Install analyzers
       run: dotnet tool restore
     
-    - name: Run analyzers
+    - name: Run code formatter
       run: dotnet format --verify-no-changes
+    
+    - name: Run analyzers
+      run: dotnet build --no-restore -c Release
 

@@ -9,14 +9,44 @@ using OneOf;
 
 namespace AuthSmith.Application.Services.Users;
 
+/// <summary>
+/// Service for managing users and their role/permission assignments.
+/// </summary>
 public interface IUserService
 {
+    /// <summary>
+    /// Retrieves a user by their unique identifier.
+    /// </summary>
     Task<OneOf<UserDto, NotFoundError>> GetByIdAsync(Guid userId, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Searches users by username or email. Returns empty list if query is null or empty.
+    /// </summary>
     Task<List<UserDto>> SearchAsync(string? query, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Assigns a role to a user. Returns conflict if user already has the role.
+    /// </summary>
     Task<OneOf<Success, NotFoundError, ConflictError>> AssignRoleAsync(Guid userId, Guid roleId, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Removes a role from a user.
+    /// </summary>
     Task<OneOf<Success, NotFoundError>> RemoveRoleAsync(Guid userId, Guid roleId, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Assigns a direct permission to a user. Returns conflict if user already has the permission.
+    /// </summary>
     Task<OneOf<Success, NotFoundError, ConflictError>> AssignPermissionAsync(Guid userId, Guid permissionId, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Removes a direct permission from a user.
+    /// </summary>
     Task<OneOf<Success, NotFoundError>> RemovePermissionAsync(Guid userId, Guid permissionId, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Revokes all role and permission assignments for a user in a specific application.
+    /// </summary>
     Task<OneOf<Success, NotFoundError>> RevokeAllAssignmentsAsync(Guid userId, Guid appId, CancellationToken cancellationToken = default);
 }
 

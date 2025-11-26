@@ -33,10 +33,7 @@ public class NswagSecurityOperationProcessor : IOperationProcessor
         else
         {
             // If not AllowAnonymous, ensure X-API-Key security requirement is present
-            if (operation.Security == null)
-            {
-                operation.Security = new List<NSwag.OpenApiSecurityRequirement>();
-            }
+            operation.Security ??= [];
 
             // Clear any existing security requirements
             operation.Security.Clear();

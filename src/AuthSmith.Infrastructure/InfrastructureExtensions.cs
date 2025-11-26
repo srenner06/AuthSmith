@@ -22,35 +22,30 @@ public static partial class InfrastructureExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // Bind configuration classes
+        // Bind and validate configuration classes
         services.Configure<DatabaseConfiguration>(configuration.GetSection(DatabaseConfiguration.SectionName));
         services.Configure<ApiKeysConfiguration>(configuration.GetSection(ApiKeysConfiguration.SectionName));
         services.Configure<JwtConfiguration>(configuration.GetSection(JwtConfiguration.SectionName));
         services.Configure<RedisConfiguration>(configuration.GetSection(RedisConfiguration.SectionName));
         services.Configure<OpenTelemetryConfiguration>(configuration.GetSection(OpenTelemetryConfiguration.SectionName));
 
-        // Get database config for connection string
-        var databaseConfig = new DatabaseConfiguration();
-        configuration.GetSection(DatabaseConfiguration.SectionName).Bind(databaseConfig);
-
-        // Database
+        // Validate and get database configuration
+        var databaseConfig = configuration.GetSection(DatabaseConfiguration.SectionName).Get<DatabaseConfiguration>()
+            ?? new DatabaseConfiguration();
+        
         var connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? databaseConfig.ConnectionString
-            ?? throw new InvalidOperationException("Database connection string not configured.");
+            ?? throw new InvalidOperationException("Database connection string not configured. Set 'ConnectionStrings:DefaultConnection' or 'Database:ConnectionString'.");
 
         // Only register database if not using in-memory (for tests)
-        // Check both the connection string and the database config to be safe
-        // Also check if we're in test environment
         var isInMemory = connectionString.Equals("InMemory", StringComparison.OrdinalIgnoreCase) ||
                          databaseConfig.ConnectionString?.Equals("InMemory", StringComparison.OrdinalIgnoreCase) == true;
         
-        // Don't register database in test mode - tests will register in-memory database themselves
         if (!isInMemory)
         {
             services.AddDbContext<AuthSmithDbContext>(options =>
                 options.UseNpgsql(connectionString));
         }
-        // If in-memory, don't register anything - let tests handle it
 
         // Password and API key hashing
         services.AddSingleton<IPasswordHasher, Argon2PasswordHasher>();
@@ -66,8 +61,9 @@ public static partial class InfrastructureExtensions
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
         // Permission caching
-        var redisConfig = new RedisConfiguration();
-        configuration.GetSection(RedisConfiguration.SectionName).Bind(redisConfig);
+        var redisConfig = configuration.GetSection(RedisConfiguration.SectionName).Get<RedisConfiguration>()
+            ?? new RedisConfiguration();
+        
         if (redisConfig.Enabled && !string.IsNullOrWhiteSpace(redisConfig.ConnectionString))
         {
             services.AddSingleton<IConnectionMultiplexer>(sp =>

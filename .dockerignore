@@ -1,22 +1,52 @@
-**/.dockerignore
-**/.git
-**/.gitignore
-**/.vs
-**/.vscode
-**/*.*proj.user
-**/*.dbmdl
-**/*.jfm
-**/bin
-**/charts
-**/docker-compose*
-**/Dockerfile*
-**/node_modules
-**/npm-debug.log
-**/obj
-**/secrets.dev.yaml
-**/values.dev.yaml
-LICENSE
-README.md
-tests/
-*.md
+# Build artifacts
+**/bin/
+**/obj/
+**/TestResults/
 
+# IDE
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+!README.md
+docs/
+CONTRIBUTING.md
+LICENSE
+
+# Test files
+tests/
+**/*Tests.csproj
+**/*.Tests/
+
+# CI/CD
+.github/
+
+# Docker
+docker/
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Misc
+*.sln.user
+*.user
+*.suo
+*.cache
+*.log
+*.tmp
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db

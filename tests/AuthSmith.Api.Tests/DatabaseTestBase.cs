@@ -19,7 +19,8 @@ public abstract class DatabaseTestBase : IDisposable
         
         // Add in-memory database
         serviceCollection.AddDbContext<AuthSmithDbContext>(options =>
-            options.UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString()));
+            options.UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .ConfigureWarnings(warnings => warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning)));
 
         // Add logging
         serviceCollection.AddLogging(builder => builder.AddConsole());

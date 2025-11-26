@@ -102,7 +102,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             // Each factory instance gets its own isolated database for test isolation
             services.AddDbContext<AuthSmithDbContext>(options =>
             {
-                options.UseInMemoryDatabase(databaseName: _databaseName);
+                options.UseInMemoryDatabase(databaseName: _databaseName)
+                    .ConfigureWarnings(warnings => warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning));
             }, ServiceLifetime.Scoped, ServiceLifetime.Scoped);
         });
     }

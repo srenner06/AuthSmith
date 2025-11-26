@@ -21,6 +21,7 @@ public class AuthServiceTests : TestBase
     {
         var options = new DbContextOptionsBuilder<AuthSmithDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .ConfigureWarnings(warnings => warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning))
             .Options;
         return new AuthSmithDbContext(options);
     }

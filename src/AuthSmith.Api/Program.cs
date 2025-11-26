@@ -90,22 +90,23 @@ public class Program
                 });
             });
 
-        var dbConfig = new AuthSmith.Infrastructure.Configuration.DatabaseConfiguration();
-        builder.Configuration.GetSection(AuthSmith.Infrastructure.Configuration.DatabaseConfiguration.SectionName).Bind(dbConfig);
-        var dbConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-            ?? dbConfig.ConnectionString
-            ?? throw new InvalidOperationException("Database connection string not configured");
-
-        var jwtConfig = new AuthSmith.Infrastructure.Configuration.JwtConfiguration();
-        builder.Configuration.GetSection(AuthSmith.Infrastructure.Configuration.JwtConfiguration.SectionName).Bind(jwtConfig);
-
         var healthChecksBuilder = builder.Services.AddHealthChecks();
         
+        // Get configuration via IOptions for health checks
+        var dbConfig = builder.Configuration.GetSection(AuthSmith.Infrastructure.Configuration.DatabaseConfiguration.SectionName)
+            .Get<AuthSmith.Infrastructure.Configuration.DatabaseConfiguration>() ?? new();
+        
+        var dbConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+            ?? dbConfig.ConnectionString;
+        
         // Only add database health check if not using in-memory database (for tests)
-        if (!dbConnectionString.Equals("InMemory", StringComparison.OrdinalIgnoreCase))
+        if (!string.IsNullOrEmpty(dbConnectionString) && !dbConnectionString.Equals("InMemory", StringComparison.OrdinalIgnoreCase))
         {
             healthChecksBuilder.AddNpgSql(dbConnectionString, name: "database", tags: ReadyTags);
         }
+        
+        var jwtConfig = builder.Configuration.GetSection(AuthSmith.Infrastructure.Configuration.JwtConfiguration.SectionName)
+            .Get<AuthSmith.Infrastructure.Configuration.JwtConfiguration>() ?? new();
         
         healthChecksBuilder.AddCheck("jwt-key", () =>
         {

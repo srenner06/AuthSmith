@@ -1,3 +1,4 @@
+using AuthSmith.Contracts.Errors;
 using AuthSmith.Domain.Errors;
 using Microsoft.AspNetCore.Mvc;
 using OneOf;
@@ -9,124 +10,138 @@ namespace AuthSmith.Api.Extensions;
 /// </summary>
 public static class OneOfExtensions
 {
-    /// <summary>
-    /// Converts a OneOf result with NotFoundError to an ActionResult.
-    /// </summary>
+    private static ErrorResponseDto CreateErrorResponse(string message, int statusCode, string? instance = null)
+    {
+        return new ErrorResponseDto
+        {
+            Type = GetErrorType(statusCode),
+            Title = GetErrorTitle(statusCode),
+            Status = statusCode,
+            Detail = message,
+            Instance = instance
+        };
+    }
+
+    private static string GetErrorType(int statusCode) => statusCode switch
+    {
+        400 => "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+        401 => "https://tools.ietf.org/html/rfc7235#section-3.1",
+        404 => "https://tools.ietf.org/html/rfc7231#section-6.5.4",
+        409 => "https://tools.ietf.org/html/rfc7231#section-6.5.8",
+        500 => "https://tools.ietf.org/html/rfc7231#section-6.6.1",
+        _ => "https://tools.ietf.org/html/rfc7231#section-6.5.1"
+    };
+
+    private static string GetErrorTitle(int statusCode) => statusCode switch
+    {
+        400 => "Bad Request",
+        401 => "Unauthorized",
+        404 => "Not Found",
+        409 => "Conflict",
+        500 => "Internal Server Error",
+        _ => "An error occurred"
+    };
+
+    private static NotFoundObjectResult ToErrorResult(NotFoundError error) =>
+        new NotFoundObjectResult(CreateErrorResponse(error.Message ?? "Resource not found.", 404));
+
+    private static UnauthorizedObjectResult ToErrorResult(UnauthorizedError error) =>
+        new UnauthorizedObjectResult(CreateErrorResponse(error.Message, 401));
+
+    private static ConflictObjectResult ToErrorResult(ConflictError error) =>
+        new ConflictObjectResult(CreateErrorResponse(error.Message, 409));
+
+    private static BadRequestObjectResult ToErrorResult(InvalidOperationError error) =>
+        new BadRequestObjectResult(CreateErrorResponse(error.Message, 400));
+
+    private static ObjectResult ToErrorResult(FileNotFoundError error) =>
+        new ObjectResult(CreateErrorResponse(error.Message, 500)) { StatusCode = 500 };
+
     public static ActionResult<T> ToActionResult<T>(this OneOf<T, NotFoundError> result)
     {
         return result.Match<ActionResult<T>>(
             success => new OkObjectResult(success),
-            notFound => new NotFoundObjectResult(new { error = notFound.Message ?? "Resource not found." })
+            notFound => ToErrorResult(notFound)
         );
     }
 
-    /// <summary>
-    /// Converts a OneOf result with NotFoundError and ConflictError to an ActionResult.
-    /// </summary>
     public static ActionResult<T> ToActionResult<T>(this OneOf<T, NotFoundError, ConflictError> result)
     {
         return result.Match<ActionResult<T>>(
             success => new OkObjectResult(success),
-            notFound => new NotFoundObjectResult(new { error = notFound.Message ?? "Resource not found." }),
-            conflict => new ConflictObjectResult(new { error = conflict.Message })
+            notFound => ToErrorResult(notFound),
+            conflict => ToErrorResult(conflict)
         );
     }
 
-    /// <summary>
-    /// Converts a OneOf result with UnauthorizedError to an ActionResult.
-    /// </summary>
     public static ActionResult<T> ToActionResult<T>(this OneOf<T, UnauthorizedError> result)
     {
         return result.Match<ActionResult<T>>(
             success => new OkObjectResult(success),
-            unauthorized => new UnauthorizedObjectResult(new { error = unauthorized.Message })
+            unauthorized => ToErrorResult(unauthorized)
         );
     }
 
-    /// <summary>
-    /// Converts a OneOf result with NotFoundError and UnauthorizedError to an ActionResult.
-    /// </summary>
     public static ActionResult<T> ToActionResult<T>(this OneOf<T, NotFoundError, UnauthorizedError> result)
     {
         return result.Match<ActionResult<T>>(
             success => new OkObjectResult(success),
-            notFound => new NotFoundObjectResult(new { error = notFound.Message ?? "Resource not found." }),
-            unauthorized => new UnauthorizedObjectResult(new { error = unauthorized.Message })
+            notFound => ToErrorResult(notFound),
+            unauthorized => ToErrorResult(unauthorized)
         );
     }
 
-    /// <summary>
-    /// Converts a OneOf result with UnauthorizedError and NotFoundError to an ActionResult.
-    /// </summary>
     public static ActionResult<T> ToActionResult<T>(this OneOf<T, UnauthorizedError, NotFoundError> result)
     {
         return result.Match<ActionResult<T>>(
             success => new OkObjectResult(success),
-            unauthorized => new UnauthorizedObjectResult(new { error = unauthorized.Message }),
-            notFound => new NotFoundObjectResult(new { error = notFound.Message ?? "Resource not found." })
+            unauthorized => ToErrorResult(unauthorized),
+            notFound => ToErrorResult(notFound)
         );
     }
 
-    /// <summary>
-    /// Converts a OneOf result with NotFoundError, ConflictError, and InvalidOperationError to an ActionResult.
-    /// </summary>
     public static ActionResult<T> ToActionResult<T>(this OneOf<T, NotFoundError, ConflictError, InvalidOperationError> result)
     {
         return result.Match<ActionResult<T>>(
             success => new OkObjectResult(success),
-            notFound => new NotFoundObjectResult(new { error = notFound.Message ?? "Resource not found." }),
-            conflict => new ConflictObjectResult(new { error = conflict.Message }),
-            invalidOperation => new BadRequestObjectResult(new { error = invalidOperation.Message })
+            notFound => ToErrorResult(notFound),
+            conflict => ToErrorResult(conflict),
+            invalidOperation => ToErrorResult(invalidOperation)
         );
     }
 
-    /// <summary>
-    /// Converts a OneOf result with NotFoundError and InvalidOperationError to an ActionResult.
-    /// </summary>
     public static ActionResult<T> ToActionResult<T>(this OneOf<T, NotFoundError, InvalidOperationError> result)
     {
         return result.Match<ActionResult<T>>(
             success => new OkObjectResult(success),
-            notFound => new NotFoundObjectResult(new { error = notFound.Message ?? "Resource not found." }),
-            invalidOperation => new BadRequestObjectResult(new { error = invalidOperation.Message })
+            notFound => ToErrorResult(notFound),
+            invalidOperation => ToErrorResult(invalidOperation)
         );
     }
 
-    /// <summary>
-    /// Converts a OneOf result with NotFoundError and FileNotFoundError to an ActionResult.
-    /// </summary>
     public static ActionResult<T> ToActionResult<T>(this OneOf<T, NotFoundError, FileNotFoundError> result)
     {
         return result.Match<ActionResult<T>>(
             success => new OkObjectResult(success),
-            notFound => new NotFoundObjectResult(new { error = notFound.Message ?? "Resource not found." }),
-            fileNotFound => new ObjectResult(new { error = fileNotFound.Message })
-            {
-                StatusCode = 500
-            }
+            notFound => ToErrorResult(notFound),
+            fileNotFound => ToErrorResult(fileNotFound)
         );
     }
 
-    /// <summary>
-    /// Converts a OneOf result with Success and NotFoundError to an ActionResult.
-    /// </summary>
     public static ActionResult ToActionResult(this OneOf<Success, NotFoundError> result)
     {
         return result.Match<ActionResult>(
             success => new OkResult(),
-            notFound => new NotFoundObjectResult(new { error = notFound.Message ?? "Resource not found." })
+            notFound => ToErrorResult(notFound)
         );
     }
 
-    /// <summary>
-    /// Converts a OneOf result with Success, NotFoundError, and ConflictError to an ActionResult.
-    /// </summary>
     public static ActionResult ToActionResult(this OneOf<Success, NotFoundError, ConflictError> result)
     {
         return result.Match<ActionResult>(
             success => new OkResult(),
-            notFound => new NotFoundObjectResult(new { error = notFound.Message ?? "Resource not found." }),
-            conflict => new ConflictObjectResult(new { error = conflict.Message })
+            notFound => ToErrorResult(notFound),
+            conflict => ToErrorResult(conflict)
         );
     }
 }

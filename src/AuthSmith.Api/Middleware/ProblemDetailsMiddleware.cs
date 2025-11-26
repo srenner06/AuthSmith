@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AuthSmith.Contracts.Errors;
 
 namespace AuthSmith.Api.Middleware;
 
@@ -42,22 +43,23 @@ public partial class ProblemDetailsMiddleware
 
     private static Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
-        var statusCode = exception switch
+        var (statusCode, errorType, title) = exception switch
         {
-            UnauthorizedAccessException => HttpStatusCode.Unauthorized,
-            InvalidOperationException => HttpStatusCode.BadRequest,
-            ArgumentException => HttpStatusCode.BadRequest,
-            KeyNotFoundException => HttpStatusCode.NotFound,
-            _ => HttpStatusCode.InternalServerError
+            UnauthorizedAccessException => (HttpStatusCode.Unauthorized, "https://tools.ietf.org/html/rfc7235#section-3.1", "Unauthorized"),
+            InvalidOperationException => (HttpStatusCode.BadRequest, "https://tools.ietf.org/html/rfc7231#section-6.5.1", "Bad Request"),
+            ArgumentNullException => (HttpStatusCode.BadRequest, "https://tools.ietf.org/html/rfc7231#section-6.5.1", "Bad Request"),
+            ArgumentException => (HttpStatusCode.BadRequest, "https://tools.ietf.org/html/rfc7231#section-6.5.1", "Bad Request"),
+            KeyNotFoundException => (HttpStatusCode.NotFound, "https://tools.ietf.org/html/rfc7231#section-6.5.4", "Not Found"),
+            _ => (HttpStatusCode.InternalServerError, "https://tools.ietf.org/html/rfc7231#section-6.6.1", "Internal Server Error")
         };
 
-        var problemDetails = new
+        var problemDetails = new ErrorResponseDto
         {
-            type = "https://tools.ietf.org/html/rfc7231#section-6.5.1",
-            title = "An error occurred while processing your request.",
-            status = (int)statusCode,
-            detail = exception.Message,
-            instance = context.Request.Path
+            Type = errorType,
+            Title = title,
+            Status = (int)statusCode,
+            Detail = exception.Message,
+            Instance = context.Request.Path
         };
 
         context.Response.ContentType = "application/problem+json";
