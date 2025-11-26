@@ -8,8 +8,8 @@ using AuthSmith.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TUnit.Core;
 using TUnit.Assertions;
+using TUnit.Core;
 
 namespace AuthSmith.Application.Tests.Services.Applications;
 

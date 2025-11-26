@@ -21,17 +21,17 @@ public interface IAuthService
     /// Registers a new user for the specified application. Returns authentication tokens on success.
     /// </summary>
     Task<OneOf<AuthResultDto, NotFoundError, InvalidOperationError>> RegisterAsync(string appKey, RegisterRequestDto request, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Authenticates a user and returns access and refresh tokens.
     /// </summary>
     Task<OneOf<AuthResultDto, NotFoundError, UnauthorizedError>> LoginAsync(LoginRequestDto request, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Refreshes an access token using a valid refresh token.
     /// </summary>
     Task<OneOf<AuthResultDto, UnauthorizedError, NotFoundError>> RefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Revokes a refresh token, preventing its future use.
     /// </summary>

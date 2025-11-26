@@ -1,13 +1,13 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using AuthSmith.Domain.Entities;
 using AuthSmith.Domain.Errors;
 using AuthSmith.Infrastructure.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using OneOf;
-using AuthSmith.Domain.Entities;
 
 namespace AuthSmith.Infrastructure.Services.Authentication;
 
@@ -69,7 +69,7 @@ public class JwtTokenService : IJwtTokenService
 
         var keyResult = await GetSigningKeyAsync(cancellationToken);
         return keyResult.Match<OneOf<string, NotFoundError, FileNotFoundError>>(
-            key => 
+            key =>
             {
                 var credentials = new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
                 var config = _jwtConfig.Value;

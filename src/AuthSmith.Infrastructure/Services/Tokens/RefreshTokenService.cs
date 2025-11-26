@@ -1,11 +1,11 @@
 using System.Security.Cryptography;
+using AuthSmith.Domain.Entities;
 using AuthSmith.Domain.Errors;
 using AuthSmith.Infrastructure.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OneOf;
-using AuthSmith.Domain.Entities;
 
 namespace AuthSmith.Infrastructure.Services.Tokens;
 

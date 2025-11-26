@@ -40,7 +40,7 @@ public static class TestHelpers
         var publicKeyPath = Path.Combine(tempDir, "public_key.pem");
 
         using var rsa = RSA.Create(2048);
-        
+
         // Export private key in PEM format (PKCS#1 format)
         var privateKeyBytes = rsa.ExportRSAPrivateKey();
         var privateKeyPem = new StringBuilder();

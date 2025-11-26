@@ -1,5 +1,5 @@
-using AuthSmith.Domain.Errors;
 using AuthSmith.Contracts.Authorization;
+using AuthSmith.Domain.Errors;
 using AuthSmith.Infrastructure;
 using AuthSmith.Infrastructure.Services.Caching;
 using Microsoft.EntityFrameworkCore;
@@ -17,12 +17,12 @@ public interface IAuthorizationService
     /// Checks if a user has a specific permission for a module and action in an application.
     /// </summary>
     Task<OneOf<PermissionCheckResultDto, NotFoundError>> CheckPermissionAsync(PermissionCheckRequestDto request, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Performs bulk permission checks for multiple users and permissions in a single operation.
     /// </summary>
     Task<OneOf<BulkPermissionCheckResultDto, NotFoundError>> BulkCheckPermissionsAsync(BulkPermissionCheckRequestDto request, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Retrieves all permissions for a user in an application, optionally filtered by module.
     /// </summary>

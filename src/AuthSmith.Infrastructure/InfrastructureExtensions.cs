@@ -32,7 +32,7 @@ public static partial class InfrastructureExtensions
         // Validate and get database configuration
         var databaseConfig = configuration.GetSection(DatabaseConfiguration.SectionName).Get<DatabaseConfiguration>()
             ?? new DatabaseConfiguration();
-        
+
         var connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? databaseConfig.ConnectionString
             ?? throw new InvalidOperationException("Database connection string not configured. Set 'ConnectionStrings:DefaultConnection' or 'Database:ConnectionString'.");
@@ -40,7 +40,7 @@ public static partial class InfrastructureExtensions
         // Only register database if not using in-memory (for tests)
         var isInMemory = connectionString.Equals("InMemory", StringComparison.OrdinalIgnoreCase) ||
                          databaseConfig.ConnectionString?.Equals("InMemory", StringComparison.OrdinalIgnoreCase) == true;
-        
+
         if (!isInMemory)
         {
             services.AddDbContext<AuthSmithDbContext>(options =>
@@ -63,7 +63,7 @@ public static partial class InfrastructureExtensions
         // Permission caching
         var redisConfig = configuration.GetSection(RedisConfiguration.SectionName).Get<RedisConfiguration>()
             ?? new RedisConfiguration();
-        
+
         if (redisConfig.Enabled && !string.IsNullOrWhiteSpace(redisConfig.ConnectionString))
         {
             services.AddSingleton<IConnectionMultiplexer>(sp =>

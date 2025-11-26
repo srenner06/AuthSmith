@@ -9,8 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using OneOf;
-using TUnit.Core;
 using TUnit.Assertions;
+using TUnit.Core;
 using ApplicationEntity = AuthSmith.Domain.Entities.Application;
 
 namespace AuthSmith.Application.Tests.Services.Auth;
@@ -38,7 +38,7 @@ public class AuthServiceTests : TestBase
         passwordHasher ??= Helpers.MockFactory.CreatePasswordHasher();
         jwtTokenService ??= Helpers.MockFactory.CreateJwtTokenService();
         refreshTokenService ??= Helpers.MockFactory.CreateRefreshTokenService();
-        
+
         // Only create and set up default mock if one wasn't provided
         // This allows tests to provide their own mock with custom setups
         var wasMockProvided = accountLockoutService != null;

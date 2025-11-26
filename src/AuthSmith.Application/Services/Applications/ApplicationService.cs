@@ -19,22 +19,22 @@ public interface IApplicationService
     /// Creates a new application. Returns conflict error if application key already exists.
     /// </summary>
     Task<OneOf<ApplicationDto, ConflictError>> CreateAsync(CreateApplicationRequestDto request, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Lists all applications in the system.
     /// </summary>
     Task<List<ApplicationDto>> ListAsync(CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Retrieves an application by its unique identifier.
     /// </summary>
     Task<OneOf<ApplicationDto, NotFoundError>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Updates an existing application. Only provided fields are updated.
     /// </summary>
     Task<OneOf<ApplicationDto, NotFoundError>> UpdateAsync(Guid id, UpdateApplicationRequestDto request, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Generates a new API key for an application. Returns the plain-text key (only shown once).
     /// </summary>

@@ -1,11 +1,11 @@
-using AuthSmith.Domain.Errors;
 using AuthSmith.Contracts.Permissions;
+using AuthSmith.Domain.Entities;
+using AuthSmith.Domain.Errors;
 using AuthSmith.Infrastructure;
 using AuthSmith.Infrastructure.Services.Caching;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using OneOf;
-using AuthSmith.Domain.Entities;
 
 namespace AuthSmith.Application.Services.Permissions;
 
@@ -18,17 +18,17 @@ public interface IPermissionService
     /// Creates a new permission for an application. Permission code is auto-generated from application key, module, and action.
     /// </summary>
     Task<OneOf<PermissionDto, NotFoundError, ConflictError>> CreateAsync(Guid appId, CreatePermissionRequestDto request, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Lists all permissions for an application.
     /// </summary>
     Task<OneOf<List<PermissionDto>, NotFoundError>> ListAsync(Guid appId, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Retrieves a permission by its unique identifier within an application.
     /// </summary>
     Task<OneOf<PermissionDto, NotFoundError>> GetByIdAsync(Guid appId, Guid permissionId, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Deletes a permission. This will remove the permission from all roles and users who have it assigned.
     /// </summary>
@@ -57,7 +57,7 @@ public class PermissionService : IPermissionService
             .FirstOrDefaultAsync(a => a.Id == appId, cancellationToken);
         if (application == null)
             return new NotFoundError { Message = "Application not found." };
-        
+
         var permissionCode = $"{application.Key}.{request.Module}.{request.Action}".ToLowerInvariant();
         var existing = await _dbContext.Permissions
             .FirstOrDefaultAsync(p => p.ApplicationId == appId && p.Code == permissionCode, cancellationToken);
@@ -86,7 +86,7 @@ public class PermissionService : IPermissionService
             .FirstOrDefaultAsync(a => a.Id == appId, cancellationToken);
         if (application == null)
             return new NotFoundError { Message = "Application not found." };
-        
+
         var permissions = await _dbContext.Permissions
             .Where(p => p.ApplicationId == appId)
             .OrderBy(p => p.Code)

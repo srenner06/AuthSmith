@@ -16,7 +16,7 @@ public abstract class DatabaseTestBase : IDisposable
     protected DatabaseTestBase()
     {
         var serviceCollection = new ServiceCollection();
-        
+
         // Add in-memory database
         serviceCollection.AddDbContext<AuthSmithDbContext>(options =>
             options.UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
@@ -27,10 +27,10 @@ public abstract class DatabaseTestBase : IDisposable
 
         // Add infrastructure services needed for tests
         serviceCollection.AddMemoryCache();
-        
+
         ServiceProvider = serviceCollection.BuildServiceProvider();
         DbContext = ServiceProvider.GetRequiredService<AuthSmithDbContext>();
-        
+
         // Ensure database is created
         DbContext.Database.EnsureCreated();
     }

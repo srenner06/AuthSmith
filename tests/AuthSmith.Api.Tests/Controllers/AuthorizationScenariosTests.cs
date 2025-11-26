@@ -1,17 +1,17 @@
 using System.Net;
 using System.Net.Http.Json;
-using AuthSmith.Application.Tests.Helpers;
 using AuthSmith.Api.Tests.Helpers;
-using AuthSmith.Contracts.Auth;
+using AuthSmith.Application.Tests.Helpers;
 using AuthSmith.Contracts.Applications;
+using AuthSmith.Contracts.Auth;
 using AuthSmith.Contracts.Authorization;
 using AuthSmith.Domain.Enums;
 using AuthSmith.Infrastructure;
 using AuthSmith.Infrastructure.Services.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using TUnit.Core;
 using TUnit.Assertions;
+using TUnit.Core;
 
 namespace AuthSmith.Api.Tests.Controllers;
 
@@ -24,7 +24,7 @@ public class AuthorizationScenariosTests
         // Create a new factory for this test - each test gets its own isolated database
         using var factory = new CustomWebApplicationFactory();
         using var client = factory.CreateClient();
-        
+
         // Arrange
         var request = new CreateApplicationRequestDto
         {
@@ -45,7 +45,7 @@ public class AuthorizationScenariosTests
         // Create a new factory for this test - each test gets its own isolated database
         using var factory = new CustomWebApplicationFactory();
         using var client = factory.CreateClient();
-        
+
         // Arrange
         var request = new CreateApplicationRequestDto
         {
@@ -71,10 +71,10 @@ public class AuthorizationScenariosTests
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AuthSmithDbContext>();
         var apiKeyHasher = scope.ServiceProvider.GetRequiredService<IApiKeyHasher>();
-        
+
         // Ensure the database is created
         dbContext.Database.EnsureCreated();
-        
+
         // Arrange
         var app = await TestHelpers.CreateApplicationWithApiKeyAsync(
             dbContext,
@@ -82,7 +82,7 @@ public class AuthorizationScenariosTests
             key: "testapp",
             apiKey: "app-api-key");
         await dbContext.SaveChangesAsync();
-        
+
         // Note: The API key validator would need to set AccessLevel to "App" instead of "Admin"
         // This test demonstrates the scenario - actual implementation depends on ApiKeyValidator logic
         client.DefaultRequestHeaders.Add("X-API-Key", "app-api-key");
@@ -109,10 +109,10 @@ public class AuthorizationScenariosTests
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AuthSmithDbContext>();
         var apiKeyHasher = scope.ServiceProvider.GetRequiredService<IApiKeyHasher>();
-        
+
         // Ensure the database is created
         dbContext.Database.EnsureCreated();
-        
+
         // Arrange
         var app = await TestHelpers.CreateApplicationWithApiKeyAsync(
             dbContext,
@@ -144,10 +144,10 @@ public class AuthorizationScenariosTests
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AuthSmithDbContext>();
         var apiKeyHasher = scope.ServiceProvider.GetRequiredService<IApiKeyHasher>();
-        
+
         // Ensure the database is created
         dbContext.Database.EnsureCreated();
-        
+
         // Arrange
         var app = await TestHelpers.CreateApplicationWithApiKeyAsync(
             dbContext,
@@ -179,7 +179,7 @@ public class AuthorizationScenariosTests
         // Create a new factory for this test - each test gets its own isolated database
         using var factory = new CustomWebApplicationFactory();
         using var client = factory.CreateClient();
-        
+
         // Arrange
         var request = new PermissionCheckRequestDto
         {

@@ -12,7 +12,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     // Use a unique database name per factory instance
     // This ensures each test gets its own isolated database, but all scopes within the same factory share the same database
     private readonly string _databaseName = $"TestDb_{Guid.NewGuid()}";
-    
+
     // Temporary RSA key files for JWT token generation in tests
     private readonly (string PrivateKeyPath, string PublicKeyPath) _rsaKeys;
 

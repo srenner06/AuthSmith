@@ -2,8 +2,8 @@ using AuthSmith.Infrastructure.Services.Authentication;
 using AuthSmith.Infrastructure.Services.Caching;
 using AuthSmith.Infrastructure.Services.Tokens;
 using Microsoft.Extensions.Logging;
-using OneOf;
 using Moq;
+using OneOf;
 
 namespace AuthSmith.Application.Tests.Helpers;
 

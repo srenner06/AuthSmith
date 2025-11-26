@@ -91,23 +91,23 @@ public class Program
             });
 
         var healthChecksBuilder = builder.Services.AddHealthChecks();
-        
+
         // Get configuration via IOptions for health checks
         var dbConfig = builder.Configuration.GetSection(AuthSmith.Infrastructure.Configuration.DatabaseConfiguration.SectionName)
             .Get<AuthSmith.Infrastructure.Configuration.DatabaseConfiguration>() ?? new();
-        
+
         var dbConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
             ?? dbConfig.ConnectionString;
-        
+
         // Only add database health check if not using in-memory database (for tests)
         if (!string.IsNullOrEmpty(dbConnectionString) && !dbConnectionString.Equals("InMemory", StringComparison.OrdinalIgnoreCase))
         {
             healthChecksBuilder.AddNpgSql(dbConnectionString, name: "database", tags: ReadyTags);
         }
-        
+
         var jwtConfig = builder.Configuration.GetSection(AuthSmith.Infrastructure.Configuration.JwtConfiguration.SectionName)
             .Get<AuthSmith.Infrastructure.Configuration.JwtConfiguration>() ?? new();
-        
+
         healthChecksBuilder.AddCheck("jwt-key", () =>
         {
             if (string.IsNullOrWhiteSpace(jwtConfig.PrivateKeyPath) || !File.Exists(jwtConfig.PrivateKeyPath))
