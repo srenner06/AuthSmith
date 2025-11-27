@@ -32,12 +32,17 @@ jobs:
         cd ../AuthSmith.Api.Tests
         dotnet run --configuration Release --coverage --coverage-output-format cobertura
     
+    - name: Find coverage files
+      id: coverage
+      run: |
+        echo "files<<EOF" >> $GITHUB_OUTPUT
+        find tests -name "*.cobertura.xml" -type f >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+    
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
       with:
-        files: |
-          ./tests/AuthSmith.Application.Tests/bin/Release/net10.0/TestResults/*.cobertura.xml
-          ./tests/AuthSmith.Api.Tests/bin/Release/net10.0/TestResults/*.cobertura.xml
+        files: ${{ steps.coverage.outputs.files }}
         fail_ci_if_error: false
         token: ${{ secrets.CODECOV_TOKEN }}
 
