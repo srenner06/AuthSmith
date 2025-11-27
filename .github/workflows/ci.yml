@@ -32,17 +32,17 @@ jobs:
         cd ../AuthSmith.Api.Tests
         dotnet run --configuration Release --coverage --coverage-output-format cobertura
     
-    - name: Find coverage files
-      id: coverage
+    - name: Consolidate coverage files
       run: |
-        echo "files<<EOF" >> $GITHUB_OUTPUT
-        find tests -name "*.cobertura.xml" -type f >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
+        mkdir -p coverage
+        find tests -name "*.cobertura.xml" -type f -exec cp {} coverage/ \;
+        echo "Coverage files consolidated:"
+        ls -lh coverage/
     
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
-        files: ${{ steps.coverage.outputs.files }}
+        files: ./coverage/*.cobertura.xml
         fail_ci_if_error: false
         token: ${{ secrets.CODECOV_TOKEN }}
 
