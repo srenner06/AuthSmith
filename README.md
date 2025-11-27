@@ -1,8 +1,9 @@
 # AuthSmith
+[![codecov](https://codecov.io/github/srenner06/AuthSmith/graph/badge.svg?token=YCX849VTWI)](https://codecov.io/github/srenner06/AuthSmith)
 
 A production-ready authentication and authorization service built with .NET 10. AuthSmith provides centralized identity management with support for multiple applications, fine-grained permissions, and modern security practices.
 
-[![codecov](https://codecov.io/github/srenner06/AuthSmith/graph/badge.svg?token=YCX849VTWI)](https://codecov.io/github/srenner06/AuthSmith)
+![codecov](https://codecov.io/github/srenner06/AuthSmith/graphs/icicle.svg?token=YCX849VTWI)
 
 ## Features
 
