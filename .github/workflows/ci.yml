@@ -28,9 +28,9 @@ jobs:
     - name: Run tests with coverage
       run: |
         cd tests/AuthSmith.Application.Tests
-        dotnet run --configuration Release --coverage --coverage-output-format cobertura
+        dotnet run --configuration Release --coverage --coverage-output-format cobertura --coverage-settings ../../coverage.runsettings
         cd ../AuthSmith.Api.Tests
-        dotnet run --configuration Release --coverage --coverage-output-format cobertura
+        dotnet run --configuration Release --coverage --coverage-output-format cobertura --coverage-settings ../../coverage.runsettings
     
     - name: Consolidate coverage files
       run: |

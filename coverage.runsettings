@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="Code Coverage">
+        <Configuration>
+          <CodeCoverage>
+            <ModulePaths>
+              <Include>
+                <ModulePath>.*\.dll$</ModulePath>
+              </Include>
+              <Exclude>
+                <ModulePath>.*Tests\.dll$</ModulePath>
+                <ModulePath>.*\.Tests\.dll$</ModulePath>
+              </Exclude>
+            </ModulePaths>
+            <Attributes>
+              <Exclude>
+                <!-- Exclude test attributes -->
+                <Attribute>^System\.Diagnostics\.CodeAnalysis\.ExcludeFromCodeCoverageAttribute$</Attribute>
+                <Attribute>^TUnit\.TestAttribute$</Attribute>
+                <Attribute>^TUnit\.TestMethodAttribute$</Attribute>
+              </Exclude>
+            </Attributes>
+            <Sources>
+              <Exclude>
+                <!-- Exclude test source files -->
+                <Source>.*\\tests\\.*</Source>
+                <Source>.*/tests/.*</Source>
+                <!-- Exclude migration files -->
+                <Source>.*\\Migrations\\.*</Source>
+                <Source>.*/Migrations/.*</Source>
+                <!-- Exclude generated files -->
+                <Source>.*\.Designer\.cs$</Source>
+                <Source>.*ModelSnapshot\.cs$</Source>
+                <!-- Exclude test helpers and builders -->
+                <Source>.*TestBase\.cs$</Source>
+                <Source>.*TestDataBuilder\.cs$</Source>
+                <Source>.*MockFactory\.cs$</Source>
+                <Source>.*TestHelpers\.cs$</Source>
+                <Source>.*WebApplicationFactory\.cs$</Source>
+                <Source>.*DatabaseTestBase\.cs$</Source>
+              </Exclude>
+            </Sources>
+          </CodeCoverage>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>
+
