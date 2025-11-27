@@ -40,6 +40,17 @@
                 <Source>.*TestHelpers\.cs$</Source>
                 <Source>.*WebApplicationFactory\.cs$</Source>
                 <Source>.*DatabaseTestBase\.cs$</Source>
+                <!-- Exclude simple DTOs and data classes -->
+                <Source>.*\\Contracts\\.*Dto\.cs$</Source>
+                <Source>.*/Contracts/.*Dto\.cs$</Source>
+                <!-- Exclude simple error classes (exception wrappers) -->
+                <Source>.*\\Errors\\.*Error\.cs$</Source>
+                <Source>.*/Errors/.*Error\.cs$</Source>
+                <Source>.*\\Errors\\.*Success\.cs$</Source>
+                <Source>.*/Errors/.*Success\.cs$</Source>
+                <!-- Exclude configuration classes -->
+                <Source>.*\\Configuration\\.*Configuration\.cs$</Source>
+                <Source>.*/Configuration/.*Configuration\.cs$</Source>
               </Exclude>
             </Sources>
           </CodeCoverage>
