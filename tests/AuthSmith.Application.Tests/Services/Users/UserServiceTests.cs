@@ -1,14 +1,9 @@
 using AuthSmith.Application.Services.Users;
 using AuthSmith.Application.Tests.Helpers;
-using AuthSmith.Contracts.Users;
-using AuthSmith.Domain.Entities;
-using AuthSmith.Domain.Errors;
 using AuthSmith.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TUnit.Assertions;
-using TUnit.Core;
 
 namespace AuthSmith.Application.Tests.Services.Users;
 
@@ -140,7 +135,7 @@ public class UserServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         var user = TestDataBuilder.CreateUser(userName: "testuser");
         var role = TestDataBuilder.CreateRole(app.Id, name: "Admin");
         dbContext.Applications.Add(app);
@@ -209,7 +204,7 @@ public class UserServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         var user = TestDataBuilder.CreateUser(userName: "testuser");
         var role = TestDataBuilder.CreateRole(app.Id, name: "Admin");
         var userRole = TestDataBuilder.CreateUserRole(user.Id, role.Id);
@@ -235,7 +230,7 @@ public class UserServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         var user = TestDataBuilder.CreateUser(userName: "testuser");
         var role = TestDataBuilder.CreateRole(app.Id, name: "Admin");
         var userRole = TestDataBuilder.CreateUserRole(user.Id, role.Id);
@@ -288,7 +283,7 @@ public class UserServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         var user = TestDataBuilder.CreateUser(userName: "testuser");
         var permission = TestDataBuilder.CreatePermission(app.Id, module: "Test", action: "Read");
         dbContext.Applications.Add(app);
@@ -317,7 +312,7 @@ public class UserServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         var user = TestDataBuilder.CreateUser(userName: "testuser");
         var permission = TestDataBuilder.CreatePermission(app.Id, module: "Test", action: "Read");
         var userPermission = TestDataBuilder.CreateUserPermission(user.Id, permission.Id);
@@ -343,7 +338,7 @@ public class UserServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         var user = TestDataBuilder.CreateUser(userName: "testuser");
         var permission = TestDataBuilder.CreatePermission(app.Id, module: "Test", action: "Read");
         var userPermission = TestDataBuilder.CreateUserPermission(user.Id, permission.Id);
@@ -374,7 +369,7 @@ public class UserServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         var user = TestDataBuilder.CreateUser(userName: "testuser");
         var role = TestDataBuilder.CreateRole(app.Id, name: "Admin");
         var permission = TestDataBuilder.CreatePermission(app.Id, module: "Test", action: "Read");

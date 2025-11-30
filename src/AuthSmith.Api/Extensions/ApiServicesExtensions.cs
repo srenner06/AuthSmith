@@ -2,8 +2,6 @@ using System.Text.Json.Serialization;
 using Asp.Versioning;
 using AuthSmith.Api.Filters;
 using FluentValidation;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
 using NSwag;
 
 namespace AuthSmith.Api.Extensions;

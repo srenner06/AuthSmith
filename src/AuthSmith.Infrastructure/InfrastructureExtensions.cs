@@ -9,7 +9,6 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
 namespace AuthSmith.Infrastructure;
@@ -30,6 +29,8 @@ public static class InfrastructureExtensions
         services.Configure<RedisConfiguration>(configuration.GetSection(RedisConfiguration.SectionName));
         services.Configure<OpenTelemetryConfiguration>(configuration.GetSection(OpenTelemetryConfiguration.SectionName));
         services.Configure<EmailConfiguration>(configuration.GetSection(EmailConfiguration.SectionName));
+        services.Configure<RateLimitConfiguration>(configuration.GetSection(RateLimitConfiguration.SectionName));
+        services.Configure<CorsConfiguration>(configuration.GetSection(CorsConfiguration.SectionName));
 
         // Validate and get database configuration
         var databaseConfig = configuration.GetSection(DatabaseConfiguration.SectionName).Get<DatabaseConfiguration>()

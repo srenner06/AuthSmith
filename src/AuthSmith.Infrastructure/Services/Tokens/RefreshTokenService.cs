@@ -57,7 +57,7 @@ public partial class RefreshTokenService : IRefreshTokenService
     public async Task<RefreshToken> GenerateRefreshTokenAsync(Guid userId, Guid applicationId, CancellationToken cancellationToken = default)
     {
         var token = GenerateSecureToken();
-        var expiresAt = DateTime.UtcNow.AddDays(_jwtConfig.Value.RefreshTokenExpirationDays);
+        var expiresAt = DateTimeOffset.UtcNow.AddDays(_jwtConfig.Value.RefreshTokenExpirationDays);
 
         var refreshToken = new RefreshToken
         {
@@ -95,7 +95,7 @@ public partial class RefreshTokenService : IRefreshTokenService
             return new UnauthorizedError("Refresh token has been revoked.");
         }
 
-        if (refreshToken.ExpiresAt < DateTime.UtcNow)
+        if (refreshToken.ExpiresAt < DateTimeOffset.UtcNow)
         {
             LogRefreshTokenExpired(_logger, token);
             return new UnauthorizedError("Refresh token has expired.");
@@ -114,7 +114,7 @@ public partial class RefreshTokenService : IRefreshTokenService
         }
 
         // Update last used timestamp
-        refreshToken.LastUsedAt = DateTime.UtcNow;
+        refreshToken.LastUsedAt = DateTimeOffset.UtcNow;
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return refreshToken;
@@ -128,7 +128,7 @@ public partial class RefreshTokenService : IRefreshTokenService
         if (refreshToken != null)
         {
             refreshToken.IsRevoked = true;
-            refreshToken.RevokedAt = DateTime.UtcNow;
+            refreshToken.RevokedAt = DateTimeOffset.UtcNow;
             await _dbContext.SaveChangesAsync(cancellationToken);
 
             LogRevokedRefreshToken(_logger, token);
@@ -144,7 +144,7 @@ public partial class RefreshTokenService : IRefreshTokenService
         foreach (var token in refreshTokens)
         {
             token.IsRevoked = true;
-            token.RevokedAt = DateTime.UtcNow;
+            token.RevokedAt = DateTimeOffset.UtcNow;
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);

@@ -3,7 +3,6 @@ using Asp.Versioning;
 using AuthSmith.Api.Extensions;
 using AuthSmith.Application.Services.Users;
 using AuthSmith.Contracts.Users;
-using AuthSmith.Domain.Errors;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

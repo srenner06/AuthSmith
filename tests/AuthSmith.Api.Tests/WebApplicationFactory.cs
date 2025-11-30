@@ -42,6 +42,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 { "Jwt:Audience", "test-authsmith-api" },
                 { "Jwt:ExpirationMinutes", "15" },
                 { "Redis:Enabled", "false" },
+                { "RateLimit:Enabled", "false" }, // Disable rate limiting in tests
                 { "Logging:LogLevel:Default", "Warning" },
                 { "AllowedHosts", "*" }
             });

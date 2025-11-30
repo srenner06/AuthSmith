@@ -1,5 +1,4 @@
 using AuthSmith.Contracts.Auth;
-using AuthSmith.Domain.Entities;
 using AuthSmith.Domain.Errors;
 using AuthSmith.Infrastructure;
 using AuthSmith.Infrastructure.Services.Authentication;
@@ -69,7 +68,7 @@ public class SessionManagementService : ISessionManagementService
             return new NotFoundError("User not found");
         }
 
-        var now = DateTime.UtcNow;
+        var now = DateTimeOffset.UtcNow;
         var sessions = await _dbContext.RefreshTokens
             .Where(t => t.UserId == userId && !t.IsRevoked && t.ExpiresAt > now)
             .OrderByDescending(t => t.LastUsedAt ?? t.CreatedAt)
@@ -111,7 +110,7 @@ public class SessionManagementService : ISessionManagementService
         }
 
         refreshToken.IsRevoked = true;
-        refreshToken.RevokedAt = DateTime.UtcNow;
+        refreshToken.RevokedAt = DateTimeOffset.UtcNow;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
@@ -146,7 +145,7 @@ public class SessionManagementService : ISessionManagementService
             .Where(t => !currentTokenId.HasValue || t.Id != currentTokenId.Value)
             .ToListAsync(cancellationToken);
 
-        var now = DateTime.UtcNow;
+        var now = DateTimeOffset.UtcNow;
         foreach (var token in tokensToRevoke)
         {
             token.IsRevoked = true;

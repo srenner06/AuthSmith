@@ -1,14 +1,10 @@
 using AuthSmith.Application.Services.Permissions;
 using AuthSmith.Application.Tests.Helpers;
 using AuthSmith.Contracts.Permissions;
-using AuthSmith.Domain.Entities;
-using AuthSmith.Domain.Errors;
 using AuthSmith.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TUnit.Assertions;
-using TUnit.Core;
 
 namespace AuthSmith.Application.Tests.Services.Permissions;
 
@@ -43,7 +39,7 @@ public class PermissionServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         dbContext.Applications.Add(app);
         await dbContext.SaveChangesAsync();
 
@@ -63,7 +59,7 @@ public class PermissionServiceTests : TestBase
         var permission = result.AsT0;
         await Assert.That(permission.Module).IsEqualTo("Catalog");
         await Assert.That(permission.Action).IsEqualTo("Read");
-        await Assert.That(permission.Code).IsEqualTo("testapp.catalog.read");
+        await Assert.That(permission.Code).IsEqualTo($"{app.Key}.catalog.read");
         await Assert.That(permission.ApplicationId).IsEqualTo(app.Id);
 
         var dbPermission = await dbContext.Permissions.FirstOrDefaultAsync(p => p.Id == permission.Id);
@@ -96,8 +92,8 @@ public class PermissionServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
-        var existingPermission = TestDataBuilder.CreatePermission(app.Id, module: "Catalog", action: "Read", code: "testapp.catalog.read");
+        var app = TestDataBuilder.CreateApplication();
+        var existingPermission = TestDataBuilder.CreatePermission(app.Id, module: "Catalog", action: "Read", code: $"{app.Key}.catalog.read");
         dbContext.Applications.Add(app);
         dbContext.Permissions.Add(existingPermission);
         await dbContext.SaveChangesAsync();
@@ -123,7 +119,7 @@ public class PermissionServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         var permission1 = TestDataBuilder.CreatePermission(app.Id, module: "Catalog", action: "Read");
         var permission2 = TestDataBuilder.CreatePermission(app.Id, module: "Catalog", action: "Write");
         dbContext.Applications.Add(app);
@@ -146,7 +142,7 @@ public class PermissionServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         dbContext.Applications.Add(app);
         await dbContext.SaveChangesAsync();
 
@@ -166,7 +162,7 @@ public class PermissionServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         var permission = TestDataBuilder.CreatePermission(app.Id, module: "Catalog", action: "Read");
         dbContext.Applications.Add(app);
         dbContext.Permissions.Add(permission);
@@ -190,7 +186,7 @@ public class PermissionServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         dbContext.Applications.Add(app);
         await dbContext.SaveChangesAsync();
 
@@ -210,7 +206,7 @@ public class PermissionServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         var permission = TestDataBuilder.CreatePermission(app.Id, module: "Catalog", action: "Read");
         dbContext.Applications.Add(app);
         dbContext.Permissions.Add(permission);
@@ -236,7 +232,7 @@ public class PermissionServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         dbContext.Applications.Add(app);
         await dbContext.SaveChangesAsync();
 

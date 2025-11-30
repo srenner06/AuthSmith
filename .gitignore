@@ -433,13 +433,23 @@ docker/*_MIGRATION.md
 docker/*_STATUS.md
 docs/dev-notes/
 
+# Development-only documentation (generated during troubleshooting)
+docker/RATE_LIMIT_RESOLUTION.md
+docker/RATE_LIMIT_TROUBLESHOOTING.md
+docker/CONFIGURATION_REFACTORING_SUMMARY.md
+docker/CONFIG_QUICK_REF.md
+docker/CONFIGURATION_GUIDE.md
+docker/check-config.ps1
+docker/check-env.bat
+docker/rebuild-and-check.bat
+
 # Environment files (contain secrets)
 .env
 .env.*
-!.env.example
+!.env.template
 docker/.env
 docker/.env.*
-!docker/.env.example
+!docker/.env.template
 
 # Docker compose overrides and backups
 docker/docker-compose.override.yml

@@ -18,15 +18,14 @@
   </Folder>
   <Folder Name="/Projektmappenelemente/docker/">
     <File Path=".dockerignore" />
+    <File Path="docker/.env" />
     <File Path="docker/.env.example" />
     <File Path="docker/COMPLETE_SETUP_GUIDE.md" />
     <File Path="docker/docker-compose.yml" />
     <File Path="docker/Dockerfile" />
-    <File Path="docker/generate-keys.bat" />
-    <File Path="docker/generate-keys.sh" />
     <File Path="docker/LOCAL_DEVELOPMENT.md" />
     <File Path="docker/QUICK_START.md" />
-    <File Path="docker/setup-dev.bat" />
+    <File Path="docker/setup-dev.ps1" />
     <File Path="docker/setup-dev.sh" />
   </Folder>
   <Folder Name="/Projektmappenelemente/docs/">

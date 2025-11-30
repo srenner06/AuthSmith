@@ -10,4 +10,5 @@ public class CreateApplicationRequestDto
     public bool AccountLockoutEnabled { get; set; } = true;
     public int MaxFailedLoginAttempts { get; set; } = 5;
     public int LockoutDurationMinutes { get; set; } = 15;
+    public bool RequireEmailVerification { get; set; } = true;
 }

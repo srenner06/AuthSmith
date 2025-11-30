@@ -1,6 +1,30 @@
 # Quick Start - Local Development
 
-**Get AuthSmith running in under 2 minutes!** ?
+**Get AuthSmith running in under 2 minutes!** ??
+
+---
+
+## ?? Configuration Pattern
+
+**IMPORTANT:** All Docker configuration is in the `.env` file!
+
+- ? **Edit `.env`** to change any configuration
+- ? **Don't edit `docker-compose.yml`** - it uses variables from `.env`
+- ?? **Restart containers** after changing `.env`
+
+**The pattern:**
+```yaml
+# docker-compose.yml uses variable substitution
+RateLimit__AuthLimit: "${RATE_LIMIT_AUTH_LIMIT:-10}"
+# ? Value comes from .env, falls back to 10 if not set
+```
+
+```bash
+# docker/.env is the single source of truth
+RATE_LIMIT_AUTH_LIMIT=30  # ? Change this!
+```
+
+See `.env.template` for all available configuration variables.
 
 ---
 
@@ -20,11 +44,13 @@ powershell -ExecutionPolicy Bypass -File setup-dev.ps1
 ```
 
 **That's it!** The script will:
-- ? Generate secure passwords and API keys
-- ? Create `.env` file with all configuration
-- ? Generate JWT RSA key pair
-- ? Create `docker-compose.override.yml`
-- ? Create necessary directories
+- ?? Read `.env.template` as source of truth
+- ?? Merge with existing `.env` (preserves your customizations)
+- ?? Generate secure passwords and API keys for placeholders
+- ?? Generate JWT RSA key pair
+- ?? Create necessary directories
+
+**Smart merging:** If you already have a `.env` file, the script only updates missing values and generates new values for placeholders, preserving your customizations!
 
 ---
 
@@ -58,7 +84,7 @@ open http://localhost:8080/swagger
 
 ---
 
-## ?? Your Credentials
+## ??? Your Credentials
 
 After running the setup script, your credentials are in `.env`:
 
@@ -74,7 +100,51 @@ grep POSTGRES_PASSWORD .env
 
 ---
 
-## ?? Test It
+## ?? Common Configuration Changes
+
+All configuration is in the `.env` file. Edit it, then restart containers.
+
+### Disable Rate Limiting (for testing)
+```bash
+# Edit .env
+RATE_LIMIT_ENABLED=false
+
+# Restart
+docker-compose restart api
+```
+
+### Enable Debug Logging
+```bash
+# Edit .env
+SERILOG_MIN_LEVEL=Debug
+
+# Restart and view logs
+docker-compose restart api
+docker-compose logs -f api
+```
+
+### Change Rate Limits
+```bash
+# Edit .env
+RATE_LIMIT_AUTH_LIMIT=50
+RATE_LIMIT_REGISTRATION_LIMIT=100
+RATE_LIMIT_PASSWORD_RESET_LIMIT=50
+
+# Restart
+docker-compose restart api
+```
+
+### Verify Configuration Loaded
+```bash
+# Check what the application loaded
+docker-compose logs api | grep "Rate Limit Configuration"
+```
+
+**See `.env.example` for all available variables!**
+
+---
+
+## ? Test It
 
 ### **1. Register a User**
 
@@ -106,7 +176,7 @@ Open http://localhost:16686:
 
 ---
 
-## ??? Common Commands
+## ?? Common Commands
 
 ```bash
 # Start services
@@ -203,7 +273,7 @@ docker-compose up -d
 
 ---
 
-## ? Quick Checklist
+## ?? Quick Checklist
 
 - [ ] Run setup script (`setup-dev.sh` or `setup-dev.ps1`)
 - [ ] Start services (`docker-compose up -d`)

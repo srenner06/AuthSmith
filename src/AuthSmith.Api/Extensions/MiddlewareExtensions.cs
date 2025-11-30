@@ -1,7 +1,8 @@
 using System.Text.Json;
 using AuthSmith.Api.Middleware;
-using Microsoft.AspNetCore.Builder;
+using AuthSmith.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
 
 namespace AuthSmith.Api.Extensions;
 
@@ -12,6 +13,25 @@ public static class MiddlewareExtensions
 {
     public static WebApplication ConfigureMiddleware(this WebApplication app)
     {
+        // Log rate limit configuration for diagnostics
+        using (var scope = app.Services.CreateScope())
+        {
+            var rateLimitConfig = scope.ServiceProvider.GetRequiredService<IOptions<RateLimitConfiguration>>().Value;
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+            logger.LogInformation("Rate Limit Configuration:");
+            logger.LogInformation("  Enabled: {Enabled}", rateLimitConfig.Enabled);
+            logger.LogInformation("  GeneralLimit: {GeneralLimit}", rateLimitConfig.GeneralLimit);
+            logger.LogInformation("  AuthLimit: {AuthLimit}", rateLimitConfig.AuthLimit);
+            logger.LogInformation("  RegistrationLimit: {RegistrationLimit}", rateLimitConfig.RegistrationLimit);
+            logger.LogInformation("  PasswordResetLimit: {PasswordResetLimit}", rateLimitConfig.PasswordResetLimit);
+            logger.LogInformation("  WindowSeconds: {WindowSeconds}", rateLimitConfig.WindowSeconds);
+            logger.LogInformation("  RedisConnectionString: {RedisConnectionString}",
+                string.IsNullOrEmpty(rateLimitConfig.RedisConnectionString) ? "(not set)" : "(configured)");
+            logger.LogInformation("  WhitelistedIps: {Count} entries", rateLimitConfig.WhitelistedIps.Length);
+            logger.LogInformation("  WhitelistedApiKeys: {Count} entries", rateLimitConfig.WhitelistedApiKeys.Length);
+        }
+
         // Security headers - apply before other middleware
         app.UseSecurityHeaders();
 

@@ -1,14 +1,10 @@
 using AuthSmith.Application.Services.Roles;
 using AuthSmith.Application.Tests.Helpers;
 using AuthSmith.Contracts.Roles;
-using AuthSmith.Domain.Entities;
-using AuthSmith.Domain.Errors;
 using AuthSmith.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TUnit.Assertions;
-using TUnit.Core;
 
 namespace AuthSmith.Application.Tests.Services.Roles;
 
@@ -43,7 +39,7 @@ public class RoleServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         dbContext.Applications.Add(app);
         await dbContext.SaveChangesAsync();
 
@@ -90,7 +86,7 @@ public class RoleServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         var existingRole = TestDataBuilder.CreateRole(app.Id, name: "Admin");
         dbContext.Applications.Add(app);
         dbContext.Roles.Add(existingRole);
@@ -113,7 +109,7 @@ public class RoleServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         var role1 = TestDataBuilder.CreateRole(app.Id, name: "Admin");
         var role2 = TestDataBuilder.CreateRole(app.Id, name: "User");
         dbContext.Applications.Add(app);
@@ -138,7 +134,7 @@ public class RoleServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         dbContext.Applications.Add(app);
         await dbContext.SaveChangesAsync();
 
@@ -158,7 +154,7 @@ public class RoleServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         var role = TestDataBuilder.CreateRole(app.Id, name: "Admin");
         dbContext.Applications.Add(app);
         dbContext.Roles.Add(role);
@@ -181,7 +177,7 @@ public class RoleServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         dbContext.Applications.Add(app);
         await dbContext.SaveChangesAsync();
 
@@ -201,7 +197,7 @@ public class RoleServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         var user = TestDataBuilder.CreateUser(userName: "testuser");
         var role = TestDataBuilder.CreateRole(app.Id, name: "Admin");
         var permission = TestDataBuilder.CreatePermission(app.Id, module: "Test", action: "Read");
@@ -234,7 +230,7 @@ public class RoleServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         var role = TestDataBuilder.CreateRole(app.Id, name: "Admin");
         var permission = TestDataBuilder.CreatePermission(app.Id, module: "Test", action: "Read");
         var rolePermission = TestDataBuilder.CreateRolePermission(role.Id, permission.Id);
@@ -260,7 +256,7 @@ public class RoleServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         var role = TestDataBuilder.CreateRole(app.Id, name: "Admin");
         var permission = TestDataBuilder.CreatePermission(app.Id, module: "Test", action: "Read");
         var rolePermission = TestDataBuilder.CreateRolePermission(role.Id, permission.Id);
@@ -289,7 +285,7 @@ public class RoleServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         var role = TestDataBuilder.CreateRole(app.Id, name: "Admin");
         dbContext.Applications.Add(app);
         dbContext.Roles.Add(role);
@@ -313,7 +309,7 @@ public class RoleServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         dbContext.Applications.Add(app);
         await dbContext.SaveChangesAsync();
 

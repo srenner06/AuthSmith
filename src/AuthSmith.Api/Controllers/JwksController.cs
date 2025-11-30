@@ -2,7 +2,6 @@ using System.Security.Cryptography;
 using AuthSmith.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace AuthSmith.Api.Controllers;

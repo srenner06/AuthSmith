@@ -129,7 +129,7 @@ The {appName} Team
     public Task<bool> SendEmailVerificationAsync(string to, string username, string verificationToken, CancellationToken cancellationToken = default)
     {
         var config = _config.Value;
-        var verificationUrl = $"{config.BaseUrl}/verify-email?token={verificationToken}";
+        var verificationUrl = $"{config.BaseUrl}/api/v1/email-verification/verify?token={verificationToken}";
 
         var subject = "Verify Your Email Address";
         var htmlBody = $@"
@@ -166,7 +166,7 @@ The {appName} Team
     public Task<bool> SendPasswordResetEmailAsync(string to, string username, string resetToken, CancellationToken cancellationToken = default)
     {
         var config = _config.Value;
-        var resetUrl = $"{config.BaseUrl}/reset-password?token={resetToken}";
+        var resetUrl = $"{config.BaseUrl}/api/v1/password-reset/confirm?token={resetToken}";
 
         var subject = "Password Reset Request";
         var htmlBody = $@"

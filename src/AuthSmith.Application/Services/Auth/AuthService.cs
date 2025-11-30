@@ -48,6 +48,7 @@ public partial class AuthService : IAuthService
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IRefreshTokenService _refreshTokenService;
     private readonly IAccountLockoutService _accountLockoutService;
+    private readonly IEmailVerificationService _emailVerificationService;
     private readonly ILogger<AuthService> _logger;
 
     public AuthService(
@@ -56,6 +57,7 @@ public partial class AuthService : IAuthService
         IJwtTokenService jwtTokenService,
         IRefreshTokenService refreshTokenService,
         IAccountLockoutService accountLockoutService,
+        IEmailVerificationService emailVerificationService,
         ILogger<AuthService> logger)
     {
         _dbContext = dbContext;
@@ -63,6 +65,7 @@ public partial class AuthService : IAuthService
         _jwtTokenService = jwtTokenService;
         _refreshTokenService = refreshTokenService;
         _accountLockoutService = accountLockoutService;
+        _emailVerificationService = emailVerificationService;
         _logger = logger;
     }
 
@@ -85,6 +88,7 @@ public partial class AuthService : IAuthService
             .FirstOrDefaultAsync(u => u.NormalizedUserName == normalizedUserName || u.NormalizedEmail == normalizedEmail, cancellationToken);
 
         User user;
+        var isNewUser = false;
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
@@ -102,10 +106,12 @@ public partial class AuthService : IAuthService
                     Email = request.Email,
                     NormalizedEmail = normalizedEmail,
                     PasswordHash = _passwordHasher.HashPassword(request.Password),
-                    IsActive = true
+                    IsActive = true,
+                    EmailVerified = false
                 };
                 _dbContext.Users.Add(user);
                 await _dbContext.SaveChangesAsync(cancellationToken);
+                isNewUser = true;
                 LogCreatedNewUser(_logger, user.Id, appKey);
             }
 
@@ -131,6 +137,20 @@ public partial class AuthService : IAuthService
         {
             await transaction.RollbackAsync(cancellationToken);
             throw;
+        }
+
+        // Send email verification for new users
+        if (isNewUser)
+        {
+            try
+            {
+                await _emailVerificationService.SendVerificationEmailAsync(user.Email, null, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send verification email to user {UserId}", user.Id);
+                // Continue with registration even if email fails
+            }
         }
 
         var authResult = await GenerateAuthResultAsync(user, application, cancellationToken);
@@ -159,6 +179,13 @@ public partial class AuthService : IAuthService
             return new UnauthorizedError("Invalid credentials.");
         }
 
+        // Check email verification status if required by the application
+        if (application.RequireEmailVerification && !user.EmailVerified)
+        {
+            LogLoginAttemptUnverifiedEmail(_logger, user.Id);
+            return new UnauthorizedError("Email address has not been verified. Please check your email for a verification link.");
+        }
+
         if (await _accountLockoutService.IsAccountLockedAsync(user, application, cancellationToken))
         {
             LogLoginAttemptLockedAccount(_logger, user.Id);
@@ -173,7 +200,7 @@ public partial class AuthService : IAuthService
         }
 
         await _accountLockoutService.ResetFailedLoginAttemptsAsync(user, cancellationToken);
-        user.LastLoginAt = DateTime.UtcNow;
+        user.LastLoginAt = DateTimeOffset.UtcNow;
         await _dbContext.SaveChangesAsync(cancellationToken);
         LogSuccessfulLogin(_logger, user.Id, request.AppKey);
 
@@ -243,16 +270,19 @@ public partial class AuthService : IAuthService
     [LoggerMessage(EventId = 4, Level = LogLevel.Warning, Message = "Login attempt for locked account: {UserId}")]
     private static partial void LogLoginAttemptLockedAccount(ILogger logger, Guid userId);
 
-    [LoggerMessage(EventId = 5, Level = LogLevel.Warning, Message = "Invalid password for user {UserId}")]
+    [LoggerMessage(EventId = 5, Level = LogLevel.Warning, Message = "Login attempt for unverified email: {UserId}")]
+    private static partial void LogLoginAttemptUnverifiedEmail(ILogger logger, Guid userId);
+
+    [LoggerMessage(EventId = 6, Level = LogLevel.Warning, Message = "Invalid password for user {UserId}")]
     private static partial void LogInvalidPassword(ILogger logger, Guid userId);
 
-    [LoggerMessage(EventId = 6, Level = LogLevel.Information, Message = "Successful login for user {UserId} in application {AppKey}")]
+    [LoggerMessage(EventId = 7, Level = LogLevel.Information, Message = "Successful login for user {UserId} in application {AppKey}")]
     private static partial void LogSuccessfulLogin(ILogger logger, Guid userId, string appKey);
 
-    [LoggerMessage(EventId = 7, Level = LogLevel.Information, Message = "Refreshing token for user {UserId} in application {AppKey}")]
+    [LoggerMessage(EventId = 8, Level = LogLevel.Information, Message = "Refreshing token for user {UserId} in application {AppKey}")]
     private static partial void LogRefreshingToken(ILogger logger, Guid userId, string appKey);
 
-    [LoggerMessage(EventId = 8, Level = LogLevel.Information, Message = "Refresh token revoked")]
+    [LoggerMessage(EventId = 9, Level = LogLevel.Information, Message = "Refresh token revoked")]
     private static partial void LogRefreshTokenRevoked(ILogger logger);
 
     private async Task<OneOf<AuthResultDto, NotFoundError, FileNotFoundError>> GenerateAuthResultAsync(User user, App application, CancellationToken cancellationToken)

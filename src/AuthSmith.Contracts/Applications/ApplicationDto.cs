@@ -13,6 +13,7 @@ public class ApplicationDto
     public bool AccountLockoutEnabled { get; set; }
     public int MaxFailedLoginAttempts { get; set; }
     public int LockoutDurationMinutes { get; set; }
+    public bool RequireEmailVerification { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 }
 

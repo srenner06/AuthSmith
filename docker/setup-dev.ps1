@@ -1,9 +1,25 @@
 # AuthSmith Local Development Setup Script (PowerShell)
-# This script sets up everything you need to run AuthSmith locally
+# =============================================================================
+# This script sets up everything you need to run AuthSmith locally with Docker.
+#
+# WHAT IT DOES:
+#   1. Reads .env.template as source of truth
+#   2. Merges with existing .env (if exists), preserving user values
+#   3. Generates secure values for placeholders (<GENERATE_...>)
+#   4. Generates JWT RSA key pair for token signing
+#   5. Creates necessary directories (logs, keys)
+#
+# IMPORTANT - CONFIGURATION PATTERN:
+#   - .env.template defines all required variables
+#   - Script only updates missing or placeholder values
+#   - Your existing .env customizations are preserved
+#   - To reset: delete .env and run this script again
+#
+# =============================================================================
 
-Write-Host "==========================================" -ForegroundColor Cyan
-Write-Host "  AuthSmith Local Development Setup" -ForegroundColor Cyan
-Write-Host "==========================================" -ForegroundColor Cyan
+Write-Host "=========================================="
+Write-Host "  AuthSmith Local Development Setup"
+Write-Host "=========================================="
 Write-Host ""
 
 # Change to script directory
@@ -23,81 +39,140 @@ if (-not $opensslPath) {
     exit 1
 }
 
-# Create .env file
-$envFile = ".env"
-
-Write-Host "[Step 1] Creating environment configuration..." -ForegroundColor Yellow
-
-if (Test-Path $envFile) {
-    Write-Host "[WARNING] .env file already exists. Backing up to .env.backup" -ForegroundColor Yellow
-    Copy-Item $envFile "$envFile.backup" -Force
-}
-
-# Generate secure random passwords and keys
+# Helper function to generate secure random string
 function Generate-SecurePassword {
     $bytes = & openssl rand -base64 32
     $password = $bytes -replace '[/+=]', 'X'
     return $password.Substring(0, [Math]::Min(32, $password.Length))
 }
 
-$postgresPassword = Generate-SecurePassword
-$adminApiKey = Generate-SecurePassword
+# Helper function to parse .env file into hashtable
+function Parse-EnvFile {
+    param([string]$FilePath)
+    
+    $env = @{}
+    if (Test-Path $FilePath) {
+        Get-Content $FilePath | ForEach-Object {
+            $line = $_.Trim()
+            # Skip comments and empty lines
+            if ($line -and !$line.StartsWith('#')) {
+                if ($line -match '^([^=]+)=(.*)$') {
+                    $key = $matches[1].Trim()
+                    $value = $matches[2].Trim()
+                    $env[$key] = $value
+                }
+            }
+        }
+    }
+    return $env
+}
 
-# Create .env file
-@"
-# AuthSmith Local Development Environment
-# Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+# Helper function to write .env file
+function Write-EnvFile {
+    param(
+        [string]$TemplatePath,
+        [hashtable]$Values,
+        [string]$OutputPath
+    )
+    
+    $output = @()
+    $output += "# AuthSmith Local Development Environment"
+    $output += "# Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+    $output += "# Based on: .env.template"
+    $output += ""
+    
+    Get-Content $TemplatePath | ForEach-Object {
+        $line = $_
+        
+        # Preserve comments and empty lines
+        if (!$line.Trim() -or $line.Trim().StartsWith('#')) {
+            $output += $line
+        }
+        # Process variable lines
+        elseif ($line -match '^([^=]+)=(.*)$') {
+            $key = $matches[1].Trim()
+            $value = $matches[2].Trim()
+            
+            # Use existing value if available, otherwise use new value
+            if ($Values.ContainsKey($key)) {
+                $output += "$key=$($Values[$key])"
+            } else {
+                $output += $line
+            }
+        }
+        else {
+            $output += $line
+        }
+    }
+    
+    $output | Out-File -FilePath $OutputPath -Encoding UTF8
+}
 
-# Database Configuration
-POSTGRES_USER=authsmith
-POSTGRES_PASSWORD=$postgresPassword
-POSTGRES_DB=authsmith
-DATABASE_PORT=5433
+Write-Host "[Step 1] Processing environment configuration..." -ForegroundColor Yellow
 
-# API Keys
-ADMIN_API_KEY=$adminApiKey
+$templateFile = ".env.template"
+$envFile = ".env"
 
-# JWT Configuration
-JWT_ISSUER=https://localhost:8080
-JWT_AUDIENCE=authsmith-api
-JWT_EXPIRATION_MINUTES=15
-JWT_REFRESH_TOKEN_EXPIRATION_DAYS=7
+if (!(Test-Path $templateFile)) {
+    Write-Host "[ERROR] .env.template not found!" -ForegroundColor Red
+    Write-Host "Make sure you're running this script from the docker/ directory" -ForegroundColor Yellow
+    Read-Host "Press Enter to exit"
+    exit 1
+}
 
-# CORS Configuration
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173,http://localhost:8080
+# Parse existing .env if it exists
+$existingEnv = @{}
+$isUpdate = $false
+if (Test-Path $envFile) {
+    Write-Host "Found existing .env file - will preserve your customizations" -ForegroundColor Yellow
+    $existingEnv = Parse-EnvFile $envFile
+    $isUpdate = $true
+    
+    # Backup existing .env
+    $backupFile = "$envFile.backup.$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+    Copy-Item $envFile $backupFile -Force
+    Write-Host "Backed up existing .env to: $backupFile" -ForegroundColor Gray
+}
 
-# Redis Configuration
-REDIS_ENABLED=true
-REDIS_CONNECTION_STRING=redis:6379
+# Parse template to find placeholders
+$templateEnv = Parse-EnvFile $templateFile
+$newValues = @{}
 
-# Email Configuration (MailHog for local development)
-EMAIL_ENABLED=true
-EMAIL_SMTP_HOST=mailhog
-EMAIL_SMTP_PORT=1025
-EMAIL_ENABLE_SSL=false
-EMAIL_FROM_ADDRESS=noreply@authsmith.local
-EMAIL_FROM_NAME=AuthSmith Dev
-EMAIL_BASE_URL=http://localhost:8080
+foreach ($key in $templateEnv.Keys) {
+    $templateValue = $templateEnv[$key]
+    
+    # If existing .env has this key and it's not a placeholder, keep it
+    if ($existingEnv.ContainsKey($key)) {
+        $existingValue = $existingEnv[$key]
+        if ($existingValue -notmatch '<GENERATE_') {
+            $newValues[$key] = $existingValue
+            continue
+        }
+    }
+    
+    # Generate value for placeholders
+    if ($templateValue -match '<GENERATE_SECURE_PASSWORD>') {
+        $newValues[$key] = Generate-SecurePassword
+        Write-Host "Generated secure password for: $key" -ForegroundColor Gray
+    }
+    elseif ($templateValue -match '<GENERATE_SECURE_API_KEY>') {
+        $newValues[$key] = Generate-SecurePassword
+        Write-Host "Generated secure API key for: $key" -ForegroundColor Gray
+    }
+    else {
+        # Use template default
+        $newValues[$key] = $templateValue
+    }
+}
 
-# Rate Limiting
-RATE_LIMIT_ENABLED=true
-RATE_LIMIT_GENERAL_LIMIT=100
-RATE_LIMIT_AUTH_LIMIT=10
-RATE_LIMIT_REGISTRATION_LIMIT=5
-RATE_LIMIT_PASSWORD_RESET_LIMIT=3
-RATE_LIMIT_WINDOW_SECONDS=60
+# Write the merged .env file
+Write-EnvFile -TemplatePath $templateFile -Values $newValues -OutputPath $envFile
 
-# OpenTelemetry (Jaeger)
-OTEL_ENABLED=true
-OTEL_ENDPOINT=http://jaeger:4317
-OTEL_SERVICE_NAME=AuthSmith
-OTEL_SERVICE_VERSION=1.0.0-dev
-
-# Logging
-SERILOG_MIN_LEVEL=Information
-"@ | Out-File -FilePath $envFile -Encoding ASCII
-
-Write-Host "[OK] Created .env file" -ForegroundColor Green
+if ($isUpdate) {
+    Write-Host "[OK] Updated .env file (preserved your customizations)" -ForegroundColor Green
+} else {
+    Write-Host "[OK] Created .env file" -ForegroundColor Green
+}
 Write-Host ""
 
 # Generate JWT keys
@@ -108,7 +183,7 @@ $privateKey = Join-Path $keysDir "jwt_private_key.pem"
 $publicKey = Join-Path $keysDir "jwt_public_key.pem"
 
 if ((Test-Path $privateKey) -and (Test-Path $publicKey)) {
-    Write-Host "[WARNING] JWT keys already exist. Skipping generation." -ForegroundColor Yellow
+    Write-Host "JWT keys already exist - skipping generation" -ForegroundColor Gray
 } else {
     # Ensure keys directory exists
     if (-not (Test-Path $keysDir)) {
@@ -116,7 +191,7 @@ if ((Test-Path $privateKey) -and (Test-Path $publicKey)) {
     }
     
     # Generate RSA private key
-    Write-Host "Generating private key..." -ForegroundColor Gray
+    Write-Host "Generating RSA private key..." -ForegroundColor Gray
     & openssl genpkey -algorithm RSA -out $privateKey -pkeyopt rsa_keygen_bits:2048 2>$null
     if ($LASTEXITCODE -ne 0) {
         Write-Host "[ERROR] Failed to generate private key" -ForegroundColor Red
@@ -125,7 +200,7 @@ if ((Test-Path $privateKey) -and (Test-Path $publicKey)) {
     }
     
     # Extract public key from private key
-    Write-Host "Generating public key..." -ForegroundColor Gray
+    Write-Host "Generating RSA public key..." -ForegroundColor Gray
     & openssl rsa -pubout -in $privateKey -out $publicKey 2>$null
     if ($LASTEXITCODE -ne 0) {
         Write-Host "[ERROR] Failed to generate public key" -ForegroundColor Red
@@ -145,110 +220,66 @@ if (-not (Test-Path "logs")) {
 Write-Host "[OK] Created logs directory" -ForegroundColor Green
 Write-Host ""
 
-# Create docker-compose.override.yml
-Write-Host "[Step 4] Updating docker-compose configuration..." -ForegroundColor Yellow
-
-@"
-services:
-  db:
-    env_file:
-      - .env
-    environment:
-      POSTGRES_USER: `${POSTGRES_USER}
-      POSTGRES_PASSWORD: `${POSTGRES_PASSWORD}
-      POSTGRES_DB: `${POSTGRES_DB}
-
-  api:
-    env_file:
-      - .env
-    environment:
-      # Database
-      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=`${POSTGRES_DB};Username=`${POSTGRES_USER};Password=`${POSTGRES_PASSWORD}"
-      
-      # API Keys
-      ApiKeys__Admin__0: `${ADMIN_API_KEY}
-      
-      # JWT
-      Jwt__Issuer: `${JWT_ISSUER}
-      Jwt__Audience: `${JWT_AUDIENCE}
-      Jwt__ExpirationMinutes: `${JWT_EXPIRATION_MINUTES}
-      Jwt__RefreshTokenExpirationDays: `${JWT_REFRESH_TOKEN_EXPIRATION_DAYS}
-      
-      # CORS
-      Cors__AllowedOrigins__0: "http://localhost:3000"
-      Cors__AllowedOrigins__1: "http://localhost:5173"
-      Cors__AllowedOrigins__2: "http://localhost:8080"
-      
-      # Email
-      Email__Enabled: `${EMAIL_ENABLED}
-      Email__SmtpHost: `${EMAIL_SMTP_HOST}
-      Email__SmtpPort: `${EMAIL_SMTP_PORT}
-      Email__EnableSsl: `${EMAIL_ENABLE_SSL}
-      Email__FromAddress: `${EMAIL_FROM_ADDRESS}
-      Email__FromName: `${EMAIL_FROM_NAME}
-      Email__BaseUrl: `${EMAIL_BASE_URL}
-      
-      # Redis
-      Redis__Enabled: `${REDIS_ENABLED}
-      Redis__ConnectionString: `${REDIS_CONNECTION_STRING}
-      
-      # Rate Limiting
-      RateLimit__Enabled: `${RATE_LIMIT_ENABLED}
-      RateLimit__GeneralLimit: `${RATE_LIMIT_GENERAL_LIMIT}
-      RateLimit__AuthLimit: `${RATE_LIMIT_AUTH_LIMIT}
-      RateLimit__RegistrationLimit: `${RATE_LIMIT_REGISTRATION_LIMIT}
-      RateLimit__PasswordResetLimit: `${RATE_LIMIT_PASSWORD_RESET_LIMIT}
-      RateLimit__WindowSeconds: `${RATE_LIMIT_WINDOW_SECONDS}
-      RateLimit__RedisConnectionString: `${REDIS_CONNECTION_STRING}
-      
-      # OpenTelemetry
-      OpenTelemetry__Enabled: `${OTEL_ENABLED}
-      OpenTelemetry__Endpoint: `${OTEL_ENDPOINT}
-      OpenTelemetry__ServiceName: `${OTEL_SERVICE_NAME}
-      OpenTelemetry__ServiceVersion: `${OTEL_SERVICE_VERSION}
-      
-      # Serilog
-      Serilog__MinimumLevel__Default: `${SERILOG_MIN_LEVEL}
-"@ | Out-File -FilePath "docker-compose.override.yml" -Encoding ASCII
-
-Write-Host "[OK] Created docker-compose.override.yml" -ForegroundColor Green
-Write-Host ""
-
 # Print summary
-Write-Host "==========================================" -ForegroundColor Cyan
+Write-Host "=========================================="
 Write-Host "  Setup Complete!" -ForegroundColor Green
-Write-Host "==========================================" -ForegroundColor Cyan
+Write-Host "=========================================="
 Write-Host ""
-Write-Host "Summary:" -ForegroundColor White
-Write-Host "  * .env file created with secure credentials"
-Write-Host "  * JWT keys generated in keys/"
-Write-Host "  * docker-compose.override.yml created"
+
+if ($isUpdate) {
+    Write-Host "Summary:" -ForegroundColor White
+    Write-Host "  * Updated .env with missing values"
+    Write-Host "  * Preserved your existing customizations"
+    Write-Host "  * JWT keys verified/generated"
+    Write-Host ""
+} else {
+    Write-Host "Summary:" -ForegroundColor White
+    Write-Host "  * Created .env file with secure credentials"
+    Write-Host "  * Generated secure passwords and API keys"
+    Write-Host "  * JWT keys generated in keys/"
+    Write-Host ""
+    Write-Host "Your generated credentials:" -ForegroundColor Yellow
+    if ($newValues.ContainsKey('ADMIN_API_KEY')) {
+        Write-Host "  * Admin API Key: $($newValues['ADMIN_API_KEY'])"
+    }
+    if ($newValues.ContainsKey('POSTGRES_PASSWORD')) {
+        Write-Host "  * PostgreSQL Password: $($newValues['POSTGRES_PASSWORD'])"
+    }
+    Write-Host ""
+}
+
+Write-Host "CONFIGURATION:" -ForegroundColor Yellow
+Write-Host "  * Source of truth: .env.template" -ForegroundColor White
+Write-Host "  * Your config: .env (edit this file to customize)"
+Write-Host "  * After changes: docker-compose restart api"
 Write-Host ""
-Write-Host "Your credentials:" -ForegroundColor Yellow
-Write-Host "  * Admin API Key: $adminApiKey"
-Write-Host "  * PostgreSQL Password: $postgresPassword"
+Write-Host "  To reset configuration:"
+Write-Host "    1. Delete .env"
+Write-Host "    2. Run this script again"
 Write-Host ""
-Write-Host "[WARNING] IMPORTANT: These credentials are saved in .env" -ForegroundColor Yellow
-Write-Host ""
+
 Write-Host "Next steps:" -ForegroundColor White
-Write-Host "  1. Start services:"
+Write-Host "  1. Review/edit .env if needed:"
+Write-Host "     notepad .env" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "  2. Start services:"
 Write-Host "     docker-compose up -d" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "  2. Verify everything is running:"
+Write-Host "  3. Verify everything is running:"
 Write-Host "     docker-compose ps" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "  3. Test the API:"
+Write-Host "  4. Test the API:"
 Write-Host "     curl http://localhost:8080/api/ping" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "  4. Access services:"
+Write-Host "  5. Access services:"
 Write-Host "     * API Swagger: http://localhost:8080/swagger"
 Write-Host "     * MailHog: http://localhost:8025"
 Write-Host "     * Jaeger: http://localhost:16686"
 Write-Host ""
 Write-Host "For more information, see:"
+Write-Host "  * QUICK_START.md"
 Write-Host "  * COMPLETE_SETUP_GUIDE.md"
-Write-Host "  * LOCAL_DEVELOPMENT.md"
 Write-Host ""
-Write-Host "==========================================" -ForegroundColor Cyan
+Write-Host "=========================================="
 Write-Host ""
 Read-Host "Press Enter to exit"

@@ -84,13 +84,13 @@ public class EmailVerificationService : IEmailVerificationService
 
         // Invalidate any existing tokens
         var existingTokens = await _dbContext.EmailVerificationTokens
-            .Where(t => t.UserId == user.Id && !t.IsUsed && t.ExpiresAt > DateTime.UtcNow)
+            .Where(t => t.UserId == user.Id && !t.IsUsed && t.ExpiresAt > DateTimeOffset.UtcNow)
             .ToListAsync(cancellationToken);
 
         foreach (var existingToken in existingTokens)
         {
             existingToken.IsUsed = true;
-            existingToken.UsedAt = DateTime.UtcNow;
+            existingToken.UsedAt = DateTimeOffset.UtcNow;
         }
 
         // Create new verification token
@@ -98,7 +98,7 @@ public class EmailVerificationService : IEmailVerificationService
         {
             UserId = user.Id,
             Token = tokenHash,
-            ExpiresAt = DateTime.UtcNow.AddHours(24), // 24 hour expiration
+            ExpiresAt = DateTimeOffset.UtcNow.AddHours(24), // 24 hour expiration
             IpAddress = ipAddress
         };
 
@@ -141,7 +141,7 @@ public class EmailVerificationService : IEmailVerificationService
         // Hash the token to find it
         var tokenHash = HashToken(request.Token);
 
-        // Find the token
+        // Find the token with tracking
         var verificationToken = await _dbContext.EmailVerificationTokens
             .Include(t => t.User)
             .FirstOrDefaultAsync(t => t.Token == tokenHash, cancellationToken);
@@ -157,13 +157,20 @@ public class EmailVerificationService : IEmailVerificationService
             return new NotFoundError("Verification token has expired or already been used");
         }
 
+        // Get the user entity directly from context to ensure it's tracked
+        var user = verificationToken.User;
+
         // Mark user as verified
-        verificationToken.User.EmailVerified = true;
-        verificationToken.User.EmailVerifiedAt = DateTime.UtcNow;
+        user.EmailVerified = true;
+        user.EmailVerifiedAt = DateTimeOffset.UtcNow;
 
         // Mark token as used
         verificationToken.IsUsed = true;
-        verificationToken.UsedAt = DateTime.UtcNow;
+        verificationToken.UsedAt = DateTimeOffset.UtcNow;
+
+        // Explicitly mark entities as modified
+        _dbContext.Entry(user).State = EntityState.Modified;
+        _dbContext.Entry(verificationToken).State = EntityState.Modified;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 

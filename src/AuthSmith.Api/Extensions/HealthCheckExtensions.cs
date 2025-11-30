@@ -1,7 +1,4 @@
 using AuthSmith.Infrastructure.Configuration;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace AuthSmith.Api.Extensions;

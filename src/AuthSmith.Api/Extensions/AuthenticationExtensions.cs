@@ -1,6 +1,4 @@
 using AuthSmith.Api.Authentication;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace AuthSmith.Api.Extensions;
 

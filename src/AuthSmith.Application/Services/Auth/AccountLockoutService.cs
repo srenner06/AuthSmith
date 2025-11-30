@@ -50,7 +50,7 @@ public partial class AccountLockoutService : IAccountLockoutService
         if (user.LockedUntil == null)
             return Task.FromResult(false);
 
-        var isLocked = user.LockedUntil > DateTime.UtcNow;
+        var isLocked = user.LockedUntil > DateTimeOffset.UtcNow;
         return Task.FromResult(isLocked);
     }
 
@@ -63,7 +63,7 @@ public partial class AccountLockoutService : IAccountLockoutService
 
         if (user.FailedLoginAttempts >= application.MaxFailedLoginAttempts)
         {
-            user.LockedUntil = DateTime.UtcNow.AddMinutes(application.LockoutDurationMinutes);
+            user.LockedUntil = DateTimeOffset.UtcNow.AddMinutes(application.LockoutDurationMinutes);
             LogAccountLocked(_logger, user.Id, user.FailedLoginAttempts);
         }
 

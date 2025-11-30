@@ -21,6 +21,9 @@ public class Application : BaseEntity
     public int MaxFailedLoginAttempts { get; set; } = 5;
     public int LockoutDurationMinutes { get; set; } = 15;
 
+    // Email verification configuration
+    public bool RequireEmailVerification { get; set; } = true;
+
     // Navigation properties
     public Role? DefaultRole { get; set; }
     public ICollection<Role> Roles { get; set; } = [];

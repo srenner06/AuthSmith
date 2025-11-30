@@ -9,7 +9,15 @@ namespace AuthSmith.Sdk.EmailVerification;
 public interface IEmailVerificationClient
 {
     /// <summary>
-    /// Verify email address using token.
+    /// Verify email address using token (GET request for browser links).
+    /// </summary>
+    [Get("/api/v1/email-verification/verify")]
+    Task<EmailVerificationResponseDto> VerifyEmailViaGetAsync(
+        [Query] string token,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Verify email address using token (POST request).
     /// </summary>
     [Post("/api/v1/email-verification/verify")]
     Task<EmailVerificationResponseDto> VerifyEmailAsync(
@@ -19,8 +27,8 @@ public interface IEmailVerificationClient
     /// <summary>
     /// Resend verification email.
     /// </summary>
-    [Post("/api/v1/email-verification/resend")]
-    Task ResendVerificationEmailAsync(
+    [Post("/api/v1/email-verification/send")]
+    Task<EmailVerificationResponseDto> ResendVerificationEmailAsync(
         [Body] ResendVerificationEmailDto request,
         CancellationToken cancellationToken = default);
 }

@@ -5,39 +5,49 @@ using App = AuthSmith.Domain.Entities.Application;
 namespace AuthSmith.Application.Tests.Helpers;
 
 /// <summary>
-/// Builder for creating test data entities.
+/// Builder for creating test data entities with auto-generated unique identifiers.
 /// </summary>
 public static class TestDataBuilder
 {
+    /// <summary>
+    /// Creates an application with a unique auto-generated key.
+    /// </summary>
     public static App CreateApplication(
-        string? key = null,
         string? name = null,
         SelfRegistrationMode selfRegistrationMode = SelfRegistrationMode.Open,
-        bool isActive = true)
+        bool isActive = true,
+        bool requireEmailVerification = true)
     {
         return new App
         {
             Id = Guid.NewGuid(),
-            Key = key ?? "testapp",
+            Key = $"testapp-{Guid.NewGuid()}",  // Always auto-generate unique key
             Name = name ?? "Test Application",
             SelfRegistrationMode = selfRegistrationMode,
             IsActive = isActive,
             AccountLockoutEnabled = true,
             MaxFailedLoginAttempts = 5,
             LockoutDurationMinutes = 15,
+            RequireEmailVerification = requireEmailVerification,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
     }
 
+    /// <summary>
+    /// Creates a user with unique auto-generated username and email.
+    /// </summary>
     public static User CreateUser(
         string? userName = null,
         string? email = null,
         string? passwordHash = null,
-        bool isActive = true)
+        bool isActive = true,
+        bool emailVerified = true)
     {
-        var user = userName ?? "testuser";
-        var userEmail = email ?? "test@example.com";
+        // Auto-generate unique username and email to prevent conflicts
+        var user = userName ?? $"testuser-{Guid.NewGuid()}";
+        var userEmail = email ?? $"test-{Guid.NewGuid()}@example.com";
+
         return new User
         {
             Id = Guid.NewGuid(),
@@ -47,6 +57,8 @@ public static class TestDataBuilder
             NormalizedEmail = userEmail.ToUpperInvariant(),
             PasswordHash = passwordHash ?? "hashed_password",
             IsActive = isActive,
+            EmailVerified = emailVerified,
+            EmailVerifiedAt = emailVerified ? DateTimeOffset.UtcNow : null,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -75,16 +87,16 @@ public static class TestDataBuilder
         string? code = null,
         string? description = null)
     {
-        var appKey = "testapp";
         var mod = module ?? "TestModule";
         var act = action ?? "Read";
+
         return new Permission
         {
             Id = Guid.NewGuid(),
             ApplicationId = applicationId,
             Module = mod,
             Action = act,
-            Code = code ?? $"{appKey}.{mod.ToLowerInvariant()}.{act.ToLowerInvariant()}",
+            Code = code ?? $"testapp.{mod.ToLowerInvariant()}.{act.ToLowerInvariant()}",
             Description = description,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -129,7 +141,7 @@ public static class TestDataBuilder
             Id = Guid.NewGuid(),
             UserId = userId,
             ApplicationId = applicationId,
-            Token = token ?? "test_refresh_token",
+            Token = token ?? $"test_refresh_token_{Guid.NewGuid()}",
             ExpiresAt = DateTime.UtcNow.AddDays(7),
             IsRevoked = isRevoked,
             RevokedAt = isRevoked ? DateTime.UtcNow : null,

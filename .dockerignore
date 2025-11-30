@@ -73,3 +73,4 @@ Desktop.ini
 **/.env
 **/.env.*
 !**/.env.example
+**/appsettings*.json

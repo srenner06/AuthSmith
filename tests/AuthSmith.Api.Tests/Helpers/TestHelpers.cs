@@ -1,7 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
 using AuthSmith.Application.Tests.Helpers;
-using AuthSmith.Domain.Entities;
 using AuthSmith.Infrastructure;
 using AuthSmith.Infrastructure.Services.Authentication;
 using Microsoft.EntityFrameworkCore;
@@ -11,13 +10,15 @@ namespace AuthSmith.Api.Tests.Helpers;
 
 public static class TestHelpers
 {
+    /// <summary>
+    /// Creates an application with an API key for testing. The application key is auto-generated to be unique.
+    /// </summary>
     public static async Task<App> CreateApplicationWithApiKeyAsync(
         AuthSmithDbContext dbContext,
         IApiKeyHasher apiKeyHasher,
-        string? key = null,
         string? apiKey = null)
     {
-        var app = TestDataBuilder.CreateApplication(key: key ?? "testapp");
+        var app = TestDataBuilder.CreateApplication();  // Auto-generates unique key
         if (apiKey != null)
         {
             app.ApiKeyHash = apiKeyHasher.HashApiKey(apiKey);

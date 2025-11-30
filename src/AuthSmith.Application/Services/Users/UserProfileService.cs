@@ -1,5 +1,4 @@
 using AuthSmith.Contracts.Users;
-using AuthSmith.Domain.Entities;
 using AuthSmith.Domain.Errors;
 using AuthSmith.Infrastructure;
 using AuthSmith.Infrastructure.Services.Authentication;

@@ -166,6 +166,9 @@ public class RateLimitingMiddleware
         int limit,
         int windowSeconds)
     {
+        _logger.LogDebug("Rate limit check for {ClientId}: limit={Limit}, window={WindowSeconds}s",
+            clientId, limit, windowSeconds);
+
         var now = DateTime.UtcNow;
         var windowStart = now.AddSeconds(-windowSeconds);
 
@@ -282,3 +285,4 @@ public static class RateLimitingMiddlewareExtensions
         return builder.UseMiddleware<RateLimitingMiddleware>();
     }
 }
+

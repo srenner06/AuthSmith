@@ -39,7 +39,8 @@ public class AuthorizationServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
+        app.Key = "testapp";
         var user = TestDataBuilder.CreateUser(userName: "testuser");
         var role = TestDataBuilder.CreateRole(app.Id, name: "Admin");
         var permission = TestDataBuilder.CreatePermission(app.Id, module: "Catalog", action: "Read", code: "testapp.catalog.read");
@@ -83,7 +84,8 @@ public class AuthorizationServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
+        app.Key = "testapp";
         var user = TestDataBuilder.CreateUser(userName: "testuser");
         var permission = TestDataBuilder.CreatePermission(app.Id, module: "Catalog", action: "Read", code: "testapp.catalog.read");
         var userPermission = TestDataBuilder.CreateUserPermission(user.Id, permission.Id);
@@ -121,7 +123,8 @@ public class AuthorizationServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
+        app.Key = "testapp";
         var user = TestDataBuilder.CreateUser(userName: "testuser");
         dbContext.Applications.Add(app);
         dbContext.Users.Add(user);
@@ -155,7 +158,8 @@ public class AuthorizationServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
+        app.Key = "testapp";
         var user = TestDataBuilder.CreateUser(userName: "testuser");
         dbContext.Applications.Add(app);
         dbContext.Users.Add(user);
@@ -217,7 +221,8 @@ public class AuthorizationServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
+        app.Key = "testapp";
         var user = TestDataBuilder.CreateUser(userName: "testuser");
         var role = TestDataBuilder.CreateRole(app.Id, name: "Admin");
         var permission1 = TestDataBuilder.CreatePermission(app.Id, module: "Catalog", action: "Read", code: "testapp.catalog.read");
@@ -260,7 +265,8 @@ public class AuthorizationServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
+        app.Key = "testapp";
         var user = TestDataBuilder.CreateUser(userName: "testuser");
         var role = TestDataBuilder.CreateRole(app.Id, name: "Admin");
         var permission1 = TestDataBuilder.CreatePermission(app.Id, module: "Catalog", action: "Read", code: "testapp.catalog.read");
@@ -295,7 +301,8 @@ public class AuthorizationServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
+        app.Key = "testapp";
         var user = TestDataBuilder.CreateUser(userName: "testuser");
         var role = TestDataBuilder.CreateRole(app.Id, name: "Admin");
         var permission1 = TestDataBuilder.CreatePermission(app.Id, module: "Catalog", action: "Read", code: "testapp.catalog.read");

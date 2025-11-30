@@ -42,6 +42,27 @@ public class EmailVerificationController : ControllerBase
     }
 
     /// <summary>
+    /// Verify email address with token (GET endpoint for email links).
+    /// </summary>
+    /// <remarks>
+    /// Confirms the user's email address using the token from the email link.
+    /// This endpoint accepts GET requests for direct browser navigation from email links.
+    /// </remarks>
+    [HttpGet("verify")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(EmailVerificationResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<EmailVerificationResponseDto>> VerifyEmailViaGetAsync(
+        [FromQuery] string token,
+        CancellationToken cancellationToken)
+    {
+        var result = await _emailVerificationService.VerifyEmailAsync(
+            new VerifyEmailDto { Token = token },
+            cancellationToken);
+        return result.ToActionResult();
+    }
+
+    /// <summary>
     /// Verify email address with token.
     /// </summary>
     /// <remarks>

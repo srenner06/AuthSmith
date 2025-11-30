@@ -144,6 +144,124 @@ open http://localhost:8025          # MailHog (email testing)
 
 ---
 
+## ⚙️ Docker Configuration
+
+**IMPORTANT: All Docker configuration is controlled by the `.env` file!**
+
+When using Docker Compose, **do NOT edit `docker-compose.yml` to change configuration**. Instead:
+
+### Quick Configuration Steps
+
+1. **Edit the `.env` file:**
+   ```bash
+   cd docker
+   nano .env  # or notepad .env on Windows
+   ```
+
+2. **Change any values you need:**
+   ```bash
+   # Example: Adjust rate limits for development
+   RATE_LIMIT_AUTH_LIMIT=30
+   RATE_LIMIT_REGISTRATION_LIMIT=30
+   RATE_LIMIT_PASSWORD_RESET_LIMIT=30
+   ```
+
+3. **Restart containers:**
+   ```bash
+   docker-compose down
+   docker-compose up -d
+   ```
+
+4. **Verify configuration:**
+   ```bash
+   docker-compose logs api | grep "Rate Limit Configuration"
+   ```
+
+### Why This Pattern?
+
+The `docker-compose.yml` file uses **variable substitution** like this:
+```yaml
+environment:
+  RateLimit__AuthLimit: "${RATE_LIMIT_AUTH_LIMIT:-10}"
+  # ↑ Uses value from .env, or 10 if not set
+```
+
+**Benefits:**
+- ✅ **Single source of truth**: All config in `.env`
+- ✅ **Clear and explicit**: Obvious where values come from
+- ✅ **Git-safe**: `.env` is in `.gitignore` (secrets stay local)
+- ✅ **Easy to customize**: Just edit `.env` and restart
+
+### Common Configuration Tasks
+
+<details>
+<summary><b>Disable Rate Limiting (for testing)</b></summary>
+
+```bash
+# Edit docker/.env
+RATE_LIMIT_ENABLED=false
+
+# Restart
+docker-compose restart api
+```
+</details>
+
+<details>
+<summary><b>Enable Debug Logging</b></summary>
+
+```bash
+# Edit docker/.env
+SERILOG_MIN_LEVEL=Debug
+
+# Restart and view logs
+docker-compose restart api
+docker-compose logs -f api
+```
+</details>
+
+<details>
+<summary><b>Change Database Password</b></summary>
+
+```bash
+# Edit docker/.env
+POSTGRES_PASSWORD=your-new-secure-password
+
+# Restart (will create new database)
+docker-compose down -v
+docker-compose up -d
+```
+</details>
+
+<details>
+<summary><b>Verify Current Configuration</b></summary>
+
+```bash
+# What's in .env
+cat docker/.env | grep RATE_LIMIT
+
+# What Docker Compose will use
+cd docker && docker-compose config | grep RateLimit
+
+# What the application loaded
+docker-compose logs api | grep "Rate Limit Configuration"
+```
+</details>
+
+### All Configuration Variables
+
+See [docker/.env.template](docker/.env.template) for a complete list of all configurable variables with descriptions.
+
+**Key sections:**
+- Database configuration
+- API keys and JWT settings
+- **Rate limiting** (auth, registration, password reset limits)
+- Redis caching
+- Email (MailHog) configuration
+- OpenTelemetry/Jaeger tracing
+- Logging levels
+
+---
+
 ### 💻 Local Development (Without Docker)
 
 ## Prerequisites

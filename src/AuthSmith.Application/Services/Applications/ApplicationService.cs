@@ -82,6 +82,7 @@ public partial class ApplicationService : IApplicationService
             AccountLockoutEnabled = request.AccountLockoutEnabled,
             MaxFailedLoginAttempts = request.MaxFailedLoginAttempts,
             LockoutDurationMinutes = request.LockoutDurationMinutes,
+            RequireEmailVerification = request.RequireEmailVerification,
             IsActive = true
         };
 
@@ -147,6 +148,9 @@ public partial class ApplicationService : IApplicationService
         if (request.LockoutDurationMinutes.HasValue)
             application.LockoutDurationMinutes = request.LockoutDurationMinutes.Value;
 
+        if (request.RequireEmailVerification.HasValue)
+            application.RequireEmailVerification = request.RequireEmailVerification.Value;
+
         await _dbContext.SaveChangesAsync(cancellationToken);
         await _permissionCache.InvalidateApplicationPermissionsAsync(application.Id, cancellationToken);
 
@@ -189,6 +193,7 @@ public partial class ApplicationService : IApplicationService
             AccountLockoutEnabled = application.AccountLockoutEnabled,
             MaxFailedLoginAttempts = application.MaxFailedLoginAttempts,
             LockoutDurationMinutes = application.LockoutDurationMinutes,
+            RequireEmailVerification = application.RequireEmailVerification,
             CreatedAt = application.CreatedAt
         };
     }

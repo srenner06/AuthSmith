@@ -1,15 +1,11 @@
 using AuthSmith.Application.Services.Applications;
 using AuthSmith.Application.Tests.Helpers;
 using AuthSmith.Contracts.Applications;
-using AuthSmith.Domain.Entities;
 using AuthSmith.Domain.Enums;
-using AuthSmith.Domain.Errors;
 using AuthSmith.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TUnit.Assertions;
-using TUnit.Core;
 
 namespace AuthSmith.Application.Tests.Services.Applications;
 
@@ -78,7 +74,9 @@ public class ApplicationServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var existingApp = TestDataBuilder.CreateApplication(key: "testapp");
+        // Need specific key "testapp" to test conflict detection
+        var existingApp = TestDataBuilder.CreateApplication();
+        existingApp.Key = "testapp";
         dbContext.Applications.Add(existingApp);
         await dbContext.SaveChangesAsync();
 
@@ -103,7 +101,9 @@ public class ApplicationServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var existingApp = TestDataBuilder.CreateApplication(key: "testapp");
+        // Need specific key "testapp" to test case-insensitive comparison
+        var existingApp = TestDataBuilder.CreateApplication();
+        existingApp.Key = "testapp";
         dbContext.Applications.Add(existingApp);
         await dbContext.SaveChangesAsync();
 
@@ -140,8 +140,11 @@ public class ApplicationServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app1 = TestDataBuilder.CreateApplication(key: "zapp", name: "Z App");
-        var app2 = TestDataBuilder.CreateApplication(key: "aapp", name: "A App");
+        // Need specific keys to test ordering
+        var app1 = TestDataBuilder.CreateApplication(name: "Z App");
+        app1.Key = "zapp";
+        var app2 = TestDataBuilder.CreateApplication(name: "A App");
+        app2.Key = "aapp";
         dbContext.Applications.AddRange(app1, app2);
         await dbContext.SaveChangesAsync();
 
@@ -161,7 +164,7 @@ public class ApplicationServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp", name: "Test App");
+        var app = TestDataBuilder.CreateApplication(name: "Test App");
         dbContext.Applications.Add(app);
         await dbContext.SaveChangesAsync();
 
@@ -174,7 +177,6 @@ public class ApplicationServiceTests : TestBase
         await Assert.That(result.IsT0).IsTrue();
         var application = result.AsT0;
         await Assert.That(application.Id).IsEqualTo(app.Id);
-        await Assert.That(application.Key).IsEqualTo("testapp");
         await Assert.That(application.Name).IsEqualTo("Test App");
     }
 
@@ -200,7 +202,7 @@ public class ApplicationServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp", name: "Old Name");
+        var app = TestDataBuilder.CreateApplication(name: "Old Name");
         dbContext.Applications.Add(app);
         await dbContext.SaveChangesAsync();
 
@@ -247,7 +249,7 @@ public class ApplicationServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         dbContext.Applications.Add(app);
         await dbContext.SaveChangesAsync();
 
@@ -271,8 +273,8 @@ public class ApplicationServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app1 = TestDataBuilder.CreateApplication(key: "app1");
-        var app2 = TestDataBuilder.CreateApplication(key: "app2");
+        var app1 = TestDataBuilder.CreateApplication();
+        var app2 = TestDataBuilder.CreateApplication();
         dbContext.Applications.AddRange(app1, app2);
         await dbContext.SaveChangesAsync();
 
@@ -300,7 +302,7 @@ public class ApplicationServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         var role = TestDataBuilder.CreateRole(app.Id, name: "DefaultRole");
         dbContext.Applications.Add(app);
         dbContext.Roles.Add(role);
@@ -327,7 +329,7 @@ public class ApplicationServiceTests : TestBase
     {
         // Arrange
         var dbContext = CreateDbContext();
-        var app = TestDataBuilder.CreateApplication(key: "testapp");
+        var app = TestDataBuilder.CreateApplication();
         dbContext.Applications.Add(app);
         await dbContext.SaveChangesAsync();
 

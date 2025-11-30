@@ -86,13 +86,13 @@ public class PasswordResetService : IPasswordResetService
 
         // Invalidate any existing tokens for this user
         var existingTokens = await _dbContext.PasswordResetTokens
-            .Where(t => t.UserId == user.Id && !t.IsUsed && t.ExpiresAt > DateTime.UtcNow)
+            .Where(t => t.UserId == user.Id && !t.IsUsed && t.ExpiresAt > DateTimeOffset.UtcNow)
             .ToListAsync(cancellationToken);
 
         foreach (var existingToken in existingTokens)
         {
             existingToken.IsUsed = true;
-            existingToken.UsedAt = DateTime.UtcNow;
+            existingToken.UsedAt = DateTimeOffset.UtcNow;
         }
 
         // Create new reset token
@@ -100,7 +100,7 @@ public class PasswordResetService : IPasswordResetService
         {
             UserId = user.Id,
             Token = tokenHash,
-            ExpiresAt = DateTime.UtcNow.AddHours(1), // 1 hour expiration
+            ExpiresAt = DateTimeOffset.UtcNow.AddHours(1), // 1 hour expiration
             IpAddress = ipAddress
         };
 
@@ -187,7 +187,7 @@ public class PasswordResetService : IPasswordResetService
 
         // Mark token as used
         resetToken.IsUsed = true;
-        resetToken.UsedAt = DateTime.UtcNow;
+        resetToken.UsedAt = DateTimeOffset.UtcNow;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 

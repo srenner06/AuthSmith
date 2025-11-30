@@ -234,6 +234,8 @@ public class UserService : IUserService
             UserName = user.UserName,
             Email = user.Email,
             IsActive = user.IsActive,
+            EmailVerified = user.EmailVerified,
+            EmailVerifiedAt = user.EmailVerifiedAt,
             LastLoginAt = user.LastLoginAt,
             CreatedAt = user.CreatedAt
         };

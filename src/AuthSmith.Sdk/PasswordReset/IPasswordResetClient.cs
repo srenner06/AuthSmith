@@ -17,10 +17,19 @@ public interface IPasswordResetClient
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Reset password using token.
+    /// Get password reset form page (GET request for browser links).
+    /// Returns an HTML page with instructions for resetting password.
     /// </summary>
-    [Post("/api/v1/password-reset/reset")]
-    Task ResetPasswordAsync(
+    [Get("/api/v1/password-reset/confirm")]
+    Task<string> GetPasswordResetFormAsync(
+        [Query] string token,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Reset password using token (POST request).
+    /// </summary>
+    [Post("/api/v1/password-reset/confirm")]
+    Task<PasswordResetResponseDto> ResetPasswordAsync(
         [Body] PasswordResetConfirmDto request,
         CancellationToken cancellationToken = default);
 }

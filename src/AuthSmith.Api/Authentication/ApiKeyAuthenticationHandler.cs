@@ -2,7 +2,6 @@ using System.Security.Claims;
 using System.Text.Encodings.Web;
 using AuthSmith.Infrastructure.Services.Authentication;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace AuthSmith.Api.Authentication;

@@ -1,20 +1,9 @@
-using System.Text.Json;
-using Asp.Versioning;
-using AuthSmith.Api.Authentication;
 using AuthSmith.Api.Extensions;
-using AuthSmith.Api.Filters;
-using AuthSmith.Api.Middleware;
 using AuthSmith.Application;
 using AuthSmith.Infrastructure;
 using AuthSmith.Infrastructure.Configuration;
 using AuthSmith.Infrastructure.Services.Database;
-using FluentValidation;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
-using NSwag;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using Serilog;
 using Serilog.Events;
 
@@ -48,6 +37,21 @@ public class Program
             Log.Information("Starting AuthSmith API");
 
             var builder = WebApplication.CreateBuilder(args);
+
+            // Debug: Log configuration sources and RateLimit values
+            Log.Information("Configuration sources:");
+            foreach (var source in builder.Configuration.Sources)
+            {
+                Log.Information("  - {SourceType}", source.GetType().Name);
+            }
+
+            Log.Information("RateLimit configuration from IConfiguration:");
+            Log.Information("  RateLimit:Enabled = {Value}", builder.Configuration["RateLimit:Enabled"]);
+            Log.Information("  RateLimit:GeneralLimit = {Value}", builder.Configuration["RateLimit:GeneralLimit"]);
+            Log.Information("  RateLimit:AuthLimit = {Value}", builder.Configuration["RateLimit:AuthLimit"]);
+            Log.Information("  RateLimit:RegistrationLimit = {Value}", builder.Configuration["RateLimit:RegistrationLimit"]);
+            Log.Information("  RateLimit:PasswordResetLimit = {Value}", builder.Configuration["RateLimit:PasswordResetLimit"]);
+            Log.Information("  RateLimit:WindowSeconds = {Value}", builder.Configuration["RateLimit:WindowSeconds"]);
 
             // Use Serilog for logging
             builder.Host.UseSerilog();
