@@ -151,16 +151,7 @@ dotnet test tests/AuthSmith.Application.Tests
 
 Since TUnit test projects are executables, use `dotnet run` instead of `dotnet test` for coverage:
 
-**PowerShell:**
 ```powershell
-cd tests/AuthSmith.Application.Tests
-dotnet run --configuration Release --coverage --coverage-output-format cobertura
-cd ../AuthSmith.Api.Tests
-dotnet run --configuration Release --coverage --coverage-output-format cobertura
-```
-
-**Bash:**
-```bash
 cd tests/AuthSmith.Application.Tests
 dotnet run --configuration Release --coverage --coverage-output-format cobertura
 cd ../AuthSmith.Api.Tests
@@ -233,8 +224,8 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 
 - Dependencies should point inward (toward Domain)
 - Api depends on Application
-- Application depends on Domain
-- Infrastructure depends on Domain and Application
+- Application depends on Domain and Infrastructure
+- Infrastructure depends on Domain
 
 ### Error Handling
 

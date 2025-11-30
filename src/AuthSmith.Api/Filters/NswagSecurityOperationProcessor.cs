@@ -5,7 +5,9 @@ using NSwag.Generation.Processors.Contexts;
 namespace AuthSmith.Api.Filters;
 
 /// <summary>
-/// NSwag operation processor that conditionally applies security requirements based on [AllowAnonymous] attribute.
+/// NSwag operation processor that applies API key security to all endpoints.
+/// For AllowAnonymous endpoints, the lock icon will be open (optional).
+/// For protected endpoints, the lock icon will be closed (required).
 /// </summary>
 public class NswagSecurityOperationProcessor : IOperationProcessor
 {
@@ -13,37 +15,15 @@ public class NswagSecurityOperationProcessor : IOperationProcessor
     {
         var operation = context.OperationDescription.Operation;
 
-        // Check if the endpoint has [AllowAnonymous] attribute
-        var hasAllowAnonymous = false;
-        if (context.MethodInfo != null)
-        {
-            hasAllowAnonymous = context.MethodInfo.GetCustomAttributes(true)
-                .OfType<AllowAnonymousAttribute>()
-                .Any() ||
-                (context.MethodInfo.DeclaringType?.GetCustomAttributes(true)
-                .OfType<AllowAnonymousAttribute>()
-                .Any() ?? false);
-        }
+        // Always add API key security requirement for all endpoints
+        // This allows Swagger UI to send the API key header if it's set globally
+        operation.Security ??= [];
+        operation.Security.Clear();
 
-        // If AllowAnonymous, remove all security requirements
-        if (hasAllowAnonymous)
+        operation.Security.Add(new NSwag.OpenApiSecurityRequirement
         {
-            operation.Security?.Clear();
-        }
-        else
-        {
-            // If not AllowAnonymous, ensure X-API-Key security requirement is present
-            operation.Security ??= [];
-
-            // Clear any existing security requirements
-            operation.Security.Clear();
-
-            // Add API key security requirement
-            operation.Security.Add(new NSwag.OpenApiSecurityRequirement
-            {
-                { "ApiKey", Array.Empty<string>() }
-            });
-        }
+            { "ApiKey", Array.Empty<string>() }
+        });
 
         return true;
     }

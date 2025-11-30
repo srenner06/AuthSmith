@@ -6,6 +6,6 @@ public class UserDto
     public string UserName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public bool IsActive { get; set; }
-    public DateTime? LastLoginAt { get; set; }
-    public DateTime CreatedAt { get; set; }
+    public DateTimeOffset? LastLoginAt { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
 }

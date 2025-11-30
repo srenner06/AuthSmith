@@ -5,6 +5,6 @@ namespace AuthSmith.Domain.Interfaces;
 /// </summary>
 public interface ICreated
 {
-    DateTime CreatedAt { get; set; }
+    DateTimeOffset CreatedAt { get; set; }
 }
 

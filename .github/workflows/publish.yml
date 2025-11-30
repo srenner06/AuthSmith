@@ -1,0 +1,153 @@
+name: AuthSmith Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  NAME: AuthSmith
+  IMAGE_NAME: authsmith-api
+  DOCKERFILE: docker/Dockerfile
+  CONTEXT: .
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Derive version from tag
+        id: vars
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            RAW_TAG="${GITHUB_REF_NAME}"
+            VERSION="${RAW_TAG#v}"
+          else
+            RAW_TAG="manual-${GITHUB_RUN_NUMBER}"
+            VERSION="${RAW_TAG}"
+          fi
+          echo "raw_tag=${RAW_TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}"  >> "$GITHUB_OUTPUT"
+          echo "commit_hash=$(git rev-parse --short=7 HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Inject version info into API (Version.cs)
+        shell: bash
+        env:
+          FILE: src/AuthSmith.Api/Version.cs
+          VERSION_TAG: ${{ steps.vars.outputs.raw_tag }}
+        run: |
+          set -euo pipefail
+          BUILD_NUMBER="${GITHUB_RUN_NUMBER}"
+          BUILD_TIME="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          COMMIT_HASH="$(git rev-parse --short=7 HEAD)"
+          esc() { printf '%s' "$1" | sed 's/[&|\\]/\\&/g'; }
+          [ -f "$FILE" ] || { echo "ERROR: $FILE not found"; exit 1; }
+          sed -i \
+            -e "s|__BUILD_NUMBER__|$(esc "$BUILD_NUMBER")|g" \
+            -e "s|__BUILD_TIME__|$(esc "$BUILD_TIME")|g" \
+            -e "s|__VERSION_TAG__|$(esc "$VERSION_TAG")|g" \
+            -e "s|__COMMIT_HASH__|$(esc "$COMMIT_HASH")|g" \
+            "$FILE"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Push (GHCR)
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ env.CONTEXT }}
+          file: ${{ env.DOCKERFILE }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: |
+            VERSION=${{ steps.vars.outputs.version }}
+            BUILD_NUMBER=${{ github.run_number }}
+            COMMIT_HASH=${{ steps.vars.outputs.commit_hash }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Save image as tar.gz and checksum
+        shell: bash
+        env:
+          VERSION: ${{ steps.vars.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p rel
+
+          IMAGE="ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${VERSION}"
+          docker pull "$IMAGE"
+
+          OUTPUT="rel/${{ env.IMAGE_NAME }}-${VERSION}.tar.gz"
+          docker save "$IMAGE" | gzip -c > "$OUTPUT"
+          sha256sum "$OUTPUT" > "${OUTPUT}.sha256"
+
+          ls -lah rel
+
+      - name: Generate changelog for current tag
+        if: github.ref_type == 'tag'
+        id: cliff
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: .github/cliff.toml
+          args: --current --strip header
+        env:
+          GITHUB_REPO: ${{ github.repository }}
+
+      - name: Create or update GitHub Release & upload assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.vars.outputs.raw_tag }}"
+          TITLE="${{ env.NAME }} ${TAG}"
+
+          # Prepare release notes
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            NOTES="${{ steps.cliff.outputs.content }}"
+          else
+            NOTES="Manual release ${TAG}"
+          fi
+
+          # Create or update release
+          if gh release view "$TAG" &>/dev/null; then
+            if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+              printf "%s" "$NOTES" | gh release edit "$TAG" --title "$TITLE" --draft=false --notes-file -
+            else
+              gh release edit "$TAG" --title "$TITLE" --draft=false
+            fi
+          else
+            if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+              printf "%s" "$NOTES" | gh release create "$TAG" --title "$TITLE" --notes-file -
+            else
+              gh release create "$TAG" --title "$TITLE" --notes "Manual release $TAG"
+            fi
+          fi
+
+          # Upload assets
+          shopt -s nullglob
+          FILES=( rel/*.tar.gz rel/*.sha256 )
+          if [ ${#FILES[@]} -gt 0 ]; then
+            gh release upload "$TAG" "${FILES[@]}" --clobber
+          fi

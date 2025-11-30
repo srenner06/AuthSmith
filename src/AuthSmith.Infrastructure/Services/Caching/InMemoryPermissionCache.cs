@@ -6,7 +6,7 @@ namespace AuthSmith.Infrastructure.Services.Caching;
 /// <summary>
 /// In-memory permission cache implementation (fallback when Redis is unavailable).
 /// </summary>
-public partial class InMemoryPermissionCache : IPermissionCache
+public class InMemoryPermissionCache : IPermissionCache
 {
     private readonly IMemoryCache _memoryCache;
     private readonly ILogger<InMemoryPermissionCache> _logger;
@@ -47,22 +47,16 @@ public partial class InMemoryPermissionCache : IPermissionCache
     {
         // In-memory cache doesn't support pattern-based invalidation easily
         // This is a limitation - Redis implementation will be better
-        LogInvalidatingUserPermissions(_logger, userId);
+        _logger.LogWarning("Invalidating all permissions for user {UserId} - in-memory cache has limited support", userId);
         return Task.CompletedTask;
     }
 
     public Task InvalidateApplicationPermissionsAsync(Guid applicationId, CancellationToken cancellationToken = default)
     {
         // In-memory cache doesn't support pattern-based invalidation easily
-        LogInvalidatingApplicationPermissions(_logger, applicationId);
+        _logger.LogWarning("Invalidating all permissions for application {ApplicationId} - in-memory cache has limited support", applicationId);
         return Task.CompletedTask;
     }
-
-    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Invalidating all permissions for user {UserId} - in-memory cache has limited support")]
-    private static partial void LogInvalidatingUserPermissions(ILogger logger, Guid userId);
-
-    [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Invalidating all permissions for application {ApplicationId} - in-memory cache has limited support")]
-    private static partial void LogInvalidatingApplicationPermissions(ILogger logger, Guid applicationId);
 
     private static string GetCacheKey(Guid userId, Guid applicationId)
     {

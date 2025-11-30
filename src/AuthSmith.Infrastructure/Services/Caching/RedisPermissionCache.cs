@@ -7,7 +7,7 @@ namespace AuthSmith.Infrastructure.Services.Caching;
 /// <summary>
 /// Redis-based permission cache implementation.
 /// </summary>
-public partial class RedisPermissionCache : IPermissionCache
+public class RedisPermissionCache : IPermissionCache
 {
     private readonly IDatabase _database;
     private readonly ILogger<RedisPermissionCache> _logger;
@@ -34,7 +34,7 @@ public partial class RedisPermissionCache : IPermissionCache
         }
         catch (Exception ex)
         {
-            LogFailedToDeserializePermissions(_logger, userId, applicationId, ex);
+            _logger.LogError(ex, "Failed to deserialize cached permissions for user {UserId} and application {ApplicationId}", userId, applicationId);
             return null;
         }
     }
@@ -61,7 +61,7 @@ public partial class RedisPermissionCache : IPermissionCache
         if (keys.Length > 0)
         {
             await _database.KeyDeleteAsync(keys);
-            LogInvalidatedUserPermissions(_logger, keys.Length, userId);
+            _logger.LogDebug("Invalidated {Count} permission cache entries for user {UserId}", keys.Length, userId);
         }
     }
 
@@ -74,18 +74,9 @@ public partial class RedisPermissionCache : IPermissionCache
         if (keys.Length > 0)
         {
             await _database.KeyDeleteAsync(keys);
-            LogInvalidatedApplicationPermissions(_logger, keys.Length, applicationId);
+            _logger.LogDebug("Invalidated {Count} permission cache entries for application {ApplicationId}", keys.Length, applicationId);
         }
     }
-
-    [LoggerMessage(EventId = 1, Level = LogLevel.Error, Message = "Failed to deserialize cached permissions for user {UserId} and application {ApplicationId}")]
-    private static partial void LogFailedToDeserializePermissions(ILogger logger, Guid userId, Guid applicationId, Exception ex);
-
-    [LoggerMessage(EventId = 2, Level = LogLevel.Debug, Message = "Invalidated {Count} permission cache entries for user {UserId}")]
-    private static partial void LogInvalidatedUserPermissions(ILogger logger, int count, Guid userId);
-
-    [LoggerMessage(EventId = 3, Level = LogLevel.Debug, Message = "Invalidated {Count} permission cache entries for application {ApplicationId}")]
-    private static partial void LogInvalidatedApplicationPermissions(ILogger logger, int count, Guid applicationId);
 
     private static string GetCacheKey(Guid userId, Guid applicationId)
     {

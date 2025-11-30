@@ -5,7 +5,7 @@ namespace AuthSmith.Api.Middleware;
 /// <summary>
 /// Middleware for request/response logging with correlation IDs.
 /// </summary>
-public partial class RequestLoggingMiddleware
+public class RequestLoggingMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<RequestLoggingMiddleware> _logger;
@@ -41,11 +41,9 @@ public partial class RequestLoggingMiddleware
             var path = context.Request.Path.Value ?? string.Empty;
             var statusCode = context.Response.StatusCode;
             var elapsedMs = stopwatch.ElapsedMilliseconds;
-            LogRequestCompleted(_logger, method, path, statusCode, elapsedMs);
+            _logger.LogInformation("Request {Method} {Path} responded {StatusCode} in {ElapsedMilliseconds}ms",
+                method, path, statusCode, elapsedMs);
         }
     }
-
-    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Request {Method} {Path} responded {StatusCode} in {ElapsedMilliseconds}ms")]
-    private static partial void LogRequestCompleted(ILogger logger, string method, string path, int statusCode, long elapsedMilliseconds);
 }
 

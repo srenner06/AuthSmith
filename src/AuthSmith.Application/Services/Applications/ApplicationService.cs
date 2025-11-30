@@ -62,15 +62,21 @@ public partial class ApplicationService : IApplicationService
 
     public async Task<OneOf<ApplicationDto, ConflictError>> CreateAsync(CreateApplicationRequestDto request, CancellationToken cancellationToken = default)
     {
+        // Convert to lowercase for case-insensitive comparison
+        // ToLower() translates to SQL LOWER() function in both PostgreSQL and InMemory
+        // We cannot use ToLowerInvariant() or ToLower(CultureInfo.InvariantCulture) as they don't translate to SQL
+#pragma warning disable CA1304, CA1311 // Specify CultureInfo / Specify a culture
+        var lowerKey = request.Key.ToLower();
         var existing = await _dbContext.Applications
-            .FirstOrDefaultAsync(a => string.Equals(a.Key, request.Key, StringComparison.OrdinalIgnoreCase), cancellationToken);
+            .FirstOrDefaultAsync(a => a.Key.ToLower() == lowerKey, cancellationToken);
+#pragma warning restore CA1304, CA1311
 
         if (existing != null)
             return new ConflictError($"Application with key '{request.Key}' already exists.");
 
         var application = new App
         {
-            Key = request.Key.ToLowerInvariant(),
+            Key = request.Key.ToLowerInvariant(), // ToLowerInvariant is fine here - not in query
             Name = request.Name,
             SelfRegistrationMode = request.SelfRegistrationMode,
             AccountLockoutEnabled = request.AccountLockoutEnabled,

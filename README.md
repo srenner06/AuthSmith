@@ -1,8 +1,56 @@
 # AuthSmith
 
-A production-ready authentication and authorization service built with .NET 10. AuthSmith provides centralized identity management with support for multiple applications, fine-grained permissions, and modern security practices.
+<div align="center">
+
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
+[![C#](https://img.shields.io/badge/C%23-14.0-239120?logo=csharp)](https://docs.microsoft.com/en-us/dotnet/csharp/)
+[![License](https://img.shields.io/github/license/srenner06/AuthSmith)](LICENSE)
+[![Build](https://img.shields.io/github/actions/workflow/status/srenner06/AuthSmith/publish.yml?branch=main&logo=github)](https://github.com/srenner06/AuthSmith/actions)
 
 [![codecov](https://codecov.io/github/srenner06/AuthSmith/graph/badge.svg?token=YCX849VTWI)](https://codecov.io/github/srenner06/AuthSmith)
+[![Issues](https://img.shields.io/github/issues/srenner06/AuthSmith)](https://github.com/srenner06/AuthSmith/issues)
+[![Pull Requests](https://img.shields.io/github/issues-pr/srenner06/AuthSmith)](https://github.com/srenner06/AuthSmith/pulls)
+[![Last Commit](https://img.shields.io/github/last-commit/srenner06/AuthSmith)](https://github.com/srenner06/AuthSmith/commits/main)
+
+[![Docker](https://img.shields.io/badge/Docker-Supported-2496ED?logo=docker)](docker/QUICK_START.md)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis)](https://redis.io/)
+[![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-Enabled-3d348b?logo=opentelemetry)](https://opentelemetry.io/)
+
+</div>
+
+---
+
+**A production-ready authentication and authorization service built with .NET 10.** 
+
+AuthSmith provides centralized identity management with support for multiple applications, fine-grained permissions, and modern security practices.
+
+**📊 [View Code Coverage Report](docs/CODE_COVERAGE.md)** | **📚 [Documentation](docs/)** | **🐳 [Quick Start](docker/QUICK_START.md)**
+
+---
+
+## ⚠️ Personal Open-Source Project Disclaimer
+
+**This is a personal hobby project, not production-grade commercial software.**
+
+- ✅ **Good for**: Personal projects, learning, self-hosted applications
+- ⚠️ **Use with caution**: Small production deployments (if you understand the risks)
+- ❌ **Not recommended**: Critical production systems without thorough security audit
+
+**Key Points:**
+- No guaranteed support or response times
+- Single maintainer with limited time
+- May be abandoned in the future
+- Use at your own risk - see [SECURITY.md](SECURITY.md)
+- Not professionally security audited
+- Provided "as-is" without warranty
+
+**For serious production use, consider:**
+- Commercial alternatives (Auth0, Okta, Azure AD B2C, AWS Cognito)
+- Professional security audit of this codebase
+- Forking and maintaining it yourself with a team
+
+---
 
 ## Features
 
@@ -15,6 +63,7 @@ A production-ready authentication and authorization service built with .NET 10. 
 - **Account Lockout Protection**: Configurable account lockout to prevent brute-force attacks
 - **Permission Caching**: High-performance permission checks with in-memory or Redis caching
 - **RESTful API**: Clean, versioned REST API with OpenAPI documentation
+- **Version Endpoint**: `/api/ping` endpoint for health checks and version information
 
 ## Architecture Overview
 
@@ -48,6 +97,54 @@ AuthSmith follows Clean Architecture principles with clear separation of concern
 - **Application**: Business logic, use cases, validation rules
 - **Domain**: Core entities, domain models, business rules
 - **Infrastructure**: Data persistence, external service integrations, caching
+
+## Prerequisites
+
+- .NET 10.0 SDK or later
+- PostgreSQL 12+ database
+- (Optional) Redis 6+ for distributed caching
+- RSA or ECDSA key pair for JWT signing
+
+## Quick Start
+
+### 🐳 Docker Compose (Easiest - Recommended for Development)
+
+**Get running in 2 minutes:**
+
+```bash
+# 1. Clone repository
+git clone https://github.com/srenner06/AuthSmith.git
+cd AuthSmith/docker
+
+# 2. Run setup script
+./setup-dev.sh              # Linux/Mac
+# or
+powershell -ExecutionPolicy Bypass -File setup-dev.ps1  # Windows
+
+# 3. Start everything
+docker-compose up -d
+
+# 4. Access the API
+open http://localhost:8080/swagger  # API documentation
+open http://localhost:8025          # MailHog (email testing)
+```
+
+**What you get:**
+- ✅ AuthSmith API (http://localhost:8080)
+- ✅ PostgreSQL database
+- ✅ Redis cache
+- ✅ MailHog email testing (view emails at http://localhost:8025)
+- ✅ Jaeger distributed tracing (http://localhost:16686)
+- ✅ Auto-generated secure credentials
+- ✅ JWT keys automatically created
+- ✅ Auto-migrations applied
+- ✅ Ready to use!
+
+**📚 Detailed setup:** See [docker/QUICK_START.md](docker/QUICK_START.md)
+
+---
+
+### 💻 Local Development (Without Docker)
 
 ## Prerequisites
 

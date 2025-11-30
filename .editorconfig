@@ -3,6 +3,30 @@ root = true
 # C#-Dateien
 [*.cs]
 
+# Suppress CA1848 (use LoggerMessage delegates) - not critical for this use case
+dotnet_diagnostic.CA1848.severity = none
+
+# Suppress CA1860 (prefer Any() over Count) - false positive in some cases
+dotnet_diagnostic.CA1860.severity = suggestion
+
+# Suppress CA1873 (avoid costly parameter evaluation) - already handled by logging levels
+dotnet_diagnostic.CA1873.severity = none
+
+# Suppress CA1305 (specify IFormatProvider) - not needed for internal logging
+dotnet_diagnostic.CA1305.severity = none
+
+# Suppress CA1822 (mark members as static) - style preference
+dotnet_diagnostic.CA1822.severity = suggestion
+
+# Suppress CA1852 (seal types) - not critical
+dotnet_diagnostic.CA1852.severity = suggestion
+
+# Suppress CA1862 (use string comparison overload) - style preference
+dotnet_diagnostic.CA1862.severity = suggestion
+
+# Suppress CA1716 (rename parameter to avoid keyword conflict) - acceptable for interfaces
+dotnet_diagnostic.CA1716.severity = suggestion
+
 #### Wichtige EditorConfig-Optionen ####
 
 # Einzüge und Abstände
@@ -305,7 +329,7 @@ dotnet_style_prefer_is_null_check_over_reference_equality_method = true:suggesti
 dotnet_style_prefer_auto_properties = true:silent
 dotnet_style_object_initializer = false:suggestion
 dotnet_style_collection_initializer = false:silent
-dotnet_style_prefer_simplified_boolean_expressions = true:suggestion
+dot net_style_prefer_simplified_boolean_expressions = true:suggestion
 dotnet_style_prefer_conditional_expression_over_assignment = true:silent
 dotnet_style_prefer_conditional_expression_over_return = true:silent
 dotnet_style_explicit_tuple_names = true:warning

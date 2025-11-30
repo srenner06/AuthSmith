@@ -8,7 +8,7 @@ namespace AuthSmith.Api.Middleware;
 /// <summary>
 /// Middleware for formatting errors as RFC 7807 ProblemDetails.
 /// </summary>
-public partial class ProblemDetailsMiddleware
+public class ProblemDetailsMiddleware
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -33,13 +33,10 @@ public partial class ProblemDetailsMiddleware
         }
         catch (Exception ex)
         {
-            LogUnhandledException(_logger, ex);
+            _logger.LogError(ex, "Unhandled exception occurred");
             await HandleExceptionAsync(context, ex);
         }
     }
-
-    [LoggerMessage(EventId = 1, Level = LogLevel.Error, Message = "Unhandled exception occurred")]
-    private static partial void LogUnhandledException(ILogger logger, Exception ex);
 
     private static Task HandleExceptionAsync(HttpContext context, Exception exception)
     {

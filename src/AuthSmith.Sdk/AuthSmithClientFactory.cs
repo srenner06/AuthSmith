@@ -1,8 +1,14 @@
 using AuthSmith.Sdk.Applications;
+using AuthSmith.Sdk.Audit;
 using AuthSmith.Sdk.Auth;
 using AuthSmith.Sdk.Authorization;
+using AuthSmith.Sdk.EmailVerification;
+using AuthSmith.Sdk.PasswordReset;
 using AuthSmith.Sdk.Permissions;
+using AuthSmith.Sdk.Profile;
 using AuthSmith.Sdk.Roles;
+using AuthSmith.Sdk.Sessions;
+using AuthSmith.Sdk.System;
 using AuthSmith.Sdk.Users;
 using Refit;
 
@@ -27,6 +33,19 @@ public static class AuthSmithClientFactory
         httpClient.DefaultRequestHeaders.Add("X-API-Key", apiKey);
 
         return httpClient;
+    }
+
+    /// <summary>
+    /// Creates a system client (no API key required).
+    /// </summary>
+    public static ISystemClient CreateSystemClient(string baseAddress)
+    {
+        var httpClient = new HttpClient
+        {
+            BaseAddress = new Uri(baseAddress)
+        };
+
+        return RestService.For<ISystemClient>(httpClient);
     }
 
     /// <summary>
@@ -77,5 +96,44 @@ public static class AuthSmithClientFactory
         return RestService.For<IPermissionsClient>(httpClient);
     }
 
+    /// <summary>
+    /// Creates an audit client with retry policies (admin only).
+    /// </summary>
+    public static IAuditClient CreateAuditClient(HttpClient httpClient)
+    {
+        return RestService.For<IAuditClient>(httpClient);
+    }
+
+    /// <summary>
+    /// Creates an email verification client.
+    /// </summary>
+    public static IEmailVerificationClient CreateEmailVerificationClient(HttpClient httpClient)
+    {
+        return RestService.For<IEmailVerificationClient>(httpClient);
+    }
+
+    /// <summary>
+    /// Creates a password reset client.
+    /// </summary>
+    public static IPasswordResetClient CreatePasswordResetClient(HttpClient httpClient)
+    {
+        return RestService.For<IPasswordResetClient>(httpClient);
+    }
+
+    /// <summary>
+    /// Creates a session management client (requires authentication).
+    /// </summary>
+    public static ISessionManagementClient CreateSessionManagementClient(HttpClient httpClient)
+    {
+        return RestService.For<ISessionManagementClient>(httpClient);
+    }
+
+    /// <summary>
+    /// Creates a user profile client (requires authentication).
+    /// </summary>
+    public static IUserProfileClient CreateUserProfileClient(HttpClient httpClient)
+    {
+        return RestService.For<IUserProfileClient>(httpClient);
+    }
 }
 

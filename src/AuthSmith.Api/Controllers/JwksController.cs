@@ -10,7 +10,7 @@ namespace AuthSmith.Api.Controllers;
 [ApiController]
 [Route(".well-known")]
 [AllowAnonymous]
-public partial class JwksController : ControllerBase
+public class JwksController : ControllerBase
 {
     private readonly IOptions<JwtConfiguration> _jwtConfig;
     private readonly ILogger<JwksController> _logger;
@@ -62,13 +62,10 @@ public partial class JwksController : ControllerBase
         }
         catch (Exception ex)
         {
-            LogFailedToGenerateJwk(_logger, ex);
+            _logger.LogError(ex, "Failed to generate JWK");
             return StatusCode(500, new { error = "Failed to generate JWK" });
         }
     }
-
-    [LoggerMessage(EventId = 1, Level = LogLevel.Error, Message = "Failed to generate JWK")]
-    private static partial void LogFailedToGenerateJwk(ILogger logger, Exception ex);
 
     private static string Base64UrlEncode(byte[] input)
     {

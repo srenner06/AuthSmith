@@ -17,7 +17,7 @@ public interface IDatabaseMigrator
 /// <summary>
 /// Database migration runner that applies migrations on startup.
 /// </summary>
-public partial class DatabaseMigrator : IDatabaseMigrator
+public class DatabaseMigrator : IDatabaseMigrator
 {
     private readonly AuthSmith.Infrastructure.AuthSmithDbContext _dbContext;
     private readonly ILogger<DatabaseMigrator> _logger;
@@ -37,37 +37,25 @@ public partial class DatabaseMigrator : IDatabaseMigrator
             var providerName = _dbContext.Database.ProviderName;
             if (providerName == "Microsoft.EntityFrameworkCore.InMemory")
             {
-                LogSkippingInMemoryMigration(_logger);
+                _logger.LogInformation("Skipping migration for in-memory database");
                 return;
             }
 
-            LogApplyingMigrations(_logger);
+            _logger.LogInformation("Applying database migrations...");
             await _dbContext.Database.MigrateAsync(cancellationToken);
-            LogMigrationsApplied(_logger);
+            _logger.LogInformation("Database migrations applied successfully");
         }
         catch (InvalidOperationException ex) when (ex.Message.Contains("database providers") && ex.Message.Contains("InMemory"))
         {
             // If we get the provider conflict error and InMemory is involved, skip migration
-            LogSkippingInMemoryMigration(_logger);
+            _logger.LogInformation("Skipping migration for in-memory database");
             return;
         }
         catch (Exception ex)
         {
-            LogFailedToApplyMigrations(_logger, ex);
+            _logger.LogError(ex, "Failed to apply database migrations");
             throw;
         }
     }
-
-    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Applying database migrations...")]
-    private static partial void LogApplyingMigrations(ILogger logger);
-
-    [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "Database migrations applied successfully")]
-    private static partial void LogMigrationsApplied(ILogger logger);
-
-    [LoggerMessage(EventId = 3, Level = LogLevel.Error, Message = "Failed to apply database migrations")]
-    private static partial void LogFailedToApplyMigrations(ILogger logger, Exception ex);
-
-    [LoggerMessage(EventId = 4, Level = LogLevel.Information, Message = "Skipping migration for in-memory database")]
-    private static partial void LogSkippingInMemoryMigration(ILogger logger);
 }
 

@@ -1,0 +1,54 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/Projektmappenelemente/">
+    <File Path=".editorconfig" />
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path="CONTRIBUTING.md" />
+    <File Path="coverage.runsettings" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/Projektmappenelemente/docker/">
+    <File Path=".dockerignore" />
+    <File Path="docker/.env.example" />
+    <File Path="docker/COMPLETE_SETUP_GUIDE.md" />
+    <File Path="docker/docker-compose.yml" />
+    <File Path="docker/Dockerfile" />
+    <File Path="docker/generate-keys.bat" />
+    <File Path="docker/generate-keys.sh" />
+    <File Path="docker/LOCAL_DEVELOPMENT.md" />
+    <File Path="docker/QUICK_START.md" />
+    <File Path="docker/setup-dev.bat" />
+    <File Path="docker/setup-dev.sh" />
+  </Folder>
+  <Folder Name="/Projektmappenelemente/docs/">
+    <File Path="docs/API_KEY_GUIDE.md" />
+    <File Path="docs/ARCHITECTURE.md" />
+    <File Path="docs/PING_ENDPOINT.md" />
+    <File Path="docs/SDK_GUIDE.md" />
+  </Folder>
+  <Folder Name="/Projektmappenelemente/github/">
+    <File Path=".github/workflows/ci.yml" />
+    <File Path=".github/workflows/docker.yml" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/AuthSmith.Api/AuthSmith.Api.csproj" />
+    <Project Path="src/AuthSmith.Application/AuthSmith.Application.csproj" />
+    <Project Path="src/AuthSmith.Contracts/AuthSmith.Contracts.csproj" />
+    <Project Path="src/AuthSmith.Domain/AuthSmith.Domain.csproj" />
+    <Project Path="src/AuthSmith.Infrastructure/AuthSmith.Infrastructure.csproj" />
+    <Project Path="src/AuthSmith.Sdk/AuthSmith.Sdk.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AuthSmith.Api.Tests/AuthSmith.Api.Tests.csproj" />
+    <Project Path="tests/AuthSmith.Application.Tests/AuthSmith.Application.Tests.csproj" />
+  </Folder>
+</Solution>

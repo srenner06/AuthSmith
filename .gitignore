@@ -419,3 +419,37 @@ FodyWeavers.xsd
 
 
 **/appsettings.Development.json
+
+# Development summary/troubleshooting files (should not be committed)
+*_SUMMARY.md
+*_FIX.md
+*_FIXES.md
+*_STATUS.md
+*_IN_PROGRESS.md
+*_MIGRATION.md
+docker/*_FIX.md
+docker/*_FIXES_SUMMARY.md
+docker/*_MIGRATION.md
+docker/*_STATUS.md
+docs/dev-notes/
+
+# Environment files (contain secrets)
+.env
+.env.*
+!.env.example
+docker/.env
+docker/.env.*
+!docker/.env.example
+
+# Docker compose overrides and backups
+docker/docker-compose.override.yml
+docker/docker-compose.yml.original
+docker/docker-compose.yml.backup
+
+# Generated JWT keys
+docker/keys/*.pem
+docker/keys/*.key
+
+# Backup files
+*.backup
+*.bak

@@ -21,7 +21,7 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Register a new user for an application.
+    /// Register a new user for an application (programmatic - requires API key).
     /// </summary>
     [HttpPost("register/{appKey}")]
     [RequireAppAccess]
@@ -32,7 +32,25 @@ public class AuthController : ControllerBase
         [FromBody] RegisterRequestDto request,
         CancellationToken cancellationToken)
     {
-        var result = await _authService.RegisterAsync(appKey, request, cancellationToken);
+        var result = await _authService.RegisterAsync(appKey, request, requiresSelfRegistrationEnabled: false, cancellationToken);
+        return result.ToActionResult();
+    }
+
+    /// <summary>
+    /// Self-register a new user for an application (public - no API key required).
+    /// Requires application to have self-registration enabled.
+    /// </summary>
+    [HttpPost("self-register/{appKey}")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(AuthResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<AuthResultDto>> SelfRegisterAsync(
+        string appKey,
+        [FromBody] RegisterRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _authService.RegisterAsync(appKey, request, requiresSelfRegistrationEnabled: true, cancellationToken);
         return result.ToActionResult();
     }
 

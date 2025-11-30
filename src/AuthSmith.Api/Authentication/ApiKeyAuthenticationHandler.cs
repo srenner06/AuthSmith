@@ -10,7 +10,7 @@ namespace AuthSmith.Api.Authentication;
 /// <summary>
 /// Authentication handler for API key validation.
 /// </summary>
-public partial class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthenticationOptions>
+public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthenticationOptions>
 {
     private readonly IApiKeyValidator _apiKeyValidator;
 
@@ -67,7 +67,7 @@ public partial class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyA
             if (Logger.IsEnabled(LogLevel.Debug))
             {
                 var availableHeaders = string.Join(", ", Request.Headers.Select(h => h.Key));
-                LogNoApiKeyFound(Logger, Options.HeaderName, availableHeaders);
+                Logger.LogDebug("No API key found in request headers. Expected header: {Header}. Available headers: {Headers}", Options.HeaderName, availableHeaders);
             }
             return AuthenticateResult.NoResult();
         }
@@ -96,8 +96,5 @@ public partial class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyA
 
         return AuthenticateResult.Success(ticket);
     }
-
-    [LoggerMessage(EventId = 1, Level = LogLevel.Debug, Message = "No API key found in request headers. Expected header: {Header}. Available headers: {Headers}")]
-    private static partial void LogNoApiKeyFound(ILogger logger, string header, string headers);
 }
 

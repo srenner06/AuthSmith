@@ -1,52 +1,75 @@
 # Build artifacts
 **/bin/
 **/obj/
-**/TestResults/
+**/out/
+**/publish/
 
-# IDE
+# IDE and editor files
 .vs/
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.DS_Store
 
 # Git
 .git/
 .gitignore
 .gitattributes
-
-# Documentation
-*.md
-!README.md
-docs/
-CONTRIBUTING.md
-LICENSE
-
-# Test files
-tests/
-**/*Tests.csproj
-**/*.Tests/
-
-# CI/CD
 .github/
 
 # Docker
-docker/
-Dockerfile*
-docker-compose*.yml
+**/Dockerfile
+**/docker-compose*.yml
 .dockerignore
 
-# Misc
-*.sln.user
-*.user
-*.suo
-*.cache
-*.log
-*.tmp
-.env
-.env.local
+# Tests
+**/TestResults/
+**/*Tests/
+**/coverage/
+*.cobertura.xml
+coverage.runsettings
 
-# OS
-.DS_Store
+# Documentation
+*.md
+docs/
+UPGRADE_SUMMARY.md
+FINAL_STATUS_REPORT.md
+
+# Secrets and keys
+**/keys/
+**/*.pem
+**/*.pfx
+**/*.key
+
+# Logs
+**/logs/
+**/*.log
+
+# NuGet
+*.nupkg
+*.snupkg
+
+# OS files
 Thumbs.db
+Desktop.ini
+
+# Package manager
+**/node_modules/
+**/package-lock.json
+**/yarn.lock
+
+# Temporary files
+**/tmp/
+**/temp/
+
+# Database
+**/*.db
+**/*.db-*
+**/migrations/
+
+# Environment files
+**/.env
+**/.env.*
+!**/.env.example

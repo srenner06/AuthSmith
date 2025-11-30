@@ -1,69 +1,169 @@
-version: '3.8'
-
 services:
-  postgres:
+  # PostgreSQL Database
+  db:
     image: postgres:16-alpine
-    container_name: authsmith-postgres
+    container_name: authsmith-db
     environment:
+      POSTGRES_USER: authsmith
+      POSTGRES_PASSWORD: authsmith_dev_password
       POSTGRES_DB: authsmith
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"  # Changed host port to 5433 to avoid conflict
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U authsmith"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
       - authsmith-network
 
+  # Redis Cache (Optional - for distributed caching and rate limiting)
   redis:
     image: redis:7-alpine
     container_name: authsmith-redis
     ports:
       - "6379:6379"
+    command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
-      timeout: 5s
+      timeout: 3s
       retries: 5
     networks:
       - authsmith-network
 
+  # MailHog (Email testing - catches all emails for local development)
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: authsmith-mailhog
+    ports:
+      - "1025:1025"  # SMTP port
+      - "8025:8025"  # Web UI
+    networks:
+      - authsmith-network
+
+  # Jaeger (OpenTelemetry - Distributed Tracing)
+  jaeger:
+    image: jaegertracing/jaeger:2.2.0
+    container_name: authsmith-jaeger
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "4317:4317"    # OTLP gRPC receiver
+      - "4318:4318"    # OTLP HTTP receiver
+    environment:
+      - SPAN_STORAGE_TYPE=memory
+    networks:
+      - authsmith-network
+
+  # AuthSmith API
   api:
     build:
       context: ..
       dockerfile: docker/Dockerfile
     container_name: authsmith-api
     ports:
-      - "8080:8080"
-      - "8081:8081"
+      - "8080:8080"  # HTTP
+      - "8081:8081"  # HTTPS (if configured)
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Host=postgres;Database=authsmith;Username=postgres;Password=postgres
-      - Database__AutoMigrate=true
-      - Redis__Enabled=true
-      - Redis__ConnectionString=redis:6379
+      # ASP.NET Core
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      
+      # Database
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=authsmith;Username=authsmith;Password=authsmith_dev_password"
+      Database__AutoMigrate: "true"
+      
+      # JWT Configuration
+      Jwt__Issuer: "https://localhost:8080"
+      Jwt__Audience: "authsmith-api"
+      Jwt__ExpirationMinutes: "15"
+      Jwt__RefreshTokenExpirationDays: "7"
+      Jwt__PrivateKeyPath: "/app/keys/jwt_private_key.pem"
+      Jwt__PublicKeyPath: "/app/keys/jwt_public_key.pem"
+      
+      # API Keys (Change these in production!)
+      ApiKeys__Admin__0: "dev-admin-key-change-in-production"
+      
+      # Redis (Optional - comment out to use in-memory cache)
+      Redis__Enabled: "true"
+      Redis__ConnectionString: "redis:6379"
+      
+      # Email Service (using MailHog for local development)
+      Email__Enabled: "true"
+      Email__SmtpHost: "mailhog"
+      Email__SmtpPort: "1025"
+      Email__EnableSsl: "false"
+      Email__FromAddress: "noreply@authsmith.local"
+      Email__FromName: "AuthSmith Dev"
+      Email__BaseUrl: "http://localhost:8080"
+      
+      # CORS
+      Cors__AllowedOrigins__0: "http://localhost:3000"
+      Cors__AllowedOrigins__1: "http://localhost:5173"
+      Cors__AllowCredentials: "true"
+      Cors__MaxAge: "3600"
+      
+      # Rate Limiting
+      RateLimit__Enabled: "true"
+      RateLimit__GeneralLimit: "100"
+      RateLimit__AuthLimit: "10"
+      RateLimit__RegistrationLimit: "5"
+      RateLimit__PasswordResetLimit: "3"
+      RateLimit__WindowSeconds: "60"
+      RateLimit__RedisConnectionString: "redis:6379"
+      
+      # OpenTelemetry (Enabled with Jaeger)
+      OpenTelemetry__Enabled: "true"
+      OpenTelemetry__Endpoint: "http://jaeger:4317"
+      OpenTelemetry__ServiceName: "AuthSmith"
+      OpenTelemetry__ServiceVersion: "1.0.0-dev"
+      OpenTelemetry__UseConsoleExporter: "false"
+      OpenTelemetry__EnableTracing: "true"
+      OpenTelemetry__EnableMetrics: "true"
+      
+      # Serilog
+      Serilog__MinimumLevel__Default: "Information"
+      Serilog__MinimumLevel__Override__Microsoft: "Warning"
+      Serilog__MinimumLevel__Override__System: "Warning"
+    
+    volumes:
+      # Mount JWT keys (generate these first - see README)
+      - ./keys:/app/keys:ro
+      # Mount logs directory
+      - ./logs:/app/logs
+    
     depends_on:
-      postgres:
+      db:
         condition: service_healthy
       redis:
         condition: service_healthy
+      mailhog:
+        condition: service_started
+      jaeger:
+        condition: service_started
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    
     networks:
       - authsmith-network
+    
     restart: unless-stopped
 
 volumes:
   postgres_data:
+    driver: local
   redis_data:
+    driver: local
 
 networks:
   authsmith-network:
     driver: bridge
-

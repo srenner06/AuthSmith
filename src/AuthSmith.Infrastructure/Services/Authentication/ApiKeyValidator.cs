@@ -56,9 +56,9 @@ public partial class ApiKeyValidator : IApiKeyValidator
         if (string.IsNullOrWhiteSpace(apiKey))
             return ApiKeyValidationResult.Invalid();
 
-        // Check configuration for admin/bootstrap keys
+        // Check configuration for admin keys
         var config = _apiKeysConfig.Value;
-        if (config.Admin.Contains(apiKey) || apiKey == config.Bootstrap)
+        if (config.Admin.Contains(apiKey))
         {
             LogApiKeyValidatedAsAdmin(_logger);
             return ApiKeyValidationResult.Valid(ApiKeyAccessLevel.Admin);
@@ -82,7 +82,7 @@ public partial class ApiKeyValidator : IApiKeyValidator
         return ApiKeyValidationResult.Invalid();
     }
 
-    [LoggerMessage(EventId = 1, Level = LogLevel.Debug, Message = "API key validated as admin/bootstrap key")]
+    [LoggerMessage(EventId = 1, Level = LogLevel.Debug, Message = "API key validated as admin key")]
     private static partial void LogApiKeyValidatedAsAdmin(ILogger logger);
 
     [LoggerMessage(EventId = 2, Level = LogLevel.Debug, Message = "API key validated for application {ApplicationId} ({ApplicationKey})")]

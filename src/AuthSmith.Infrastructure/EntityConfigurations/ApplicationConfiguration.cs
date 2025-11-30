@@ -1,6 +1,7 @@
 using AuthSmith.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace AuthSmith.Infrastructure.EntityConfigurations;
 
@@ -22,6 +23,11 @@ public class ApplicationConfiguration : IEntityTypeConfiguration<Application>
 
         builder.Property(a => a.ApiKeyHash)
             .HasMaxLength(512);
+
+        // Store enum as string in database
+        builder.Property(a => a.SelfRegistrationMode)
+            .HasConversion<string>()
+            .HasMaxLength(50);
 
         builder.HasIndex(a => a.Key)
             .IsUnique();

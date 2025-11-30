@@ -9,7 +9,7 @@ namespace AuthSmith.Domain.Entities;
 public abstract class BaseEntity : ICreated, IUpdated
 {
     public Guid Id { get; set; } = Guid.CreateVersion7();
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset? UpdatedAt { get; set; }
 }
 

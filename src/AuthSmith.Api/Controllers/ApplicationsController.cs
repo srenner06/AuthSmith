@@ -26,6 +26,7 @@ public class ApplicationsController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(ApplicationDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ApplicationDto>> CreateApplicationAsync(
         [FromBody] CreateApplicationRequestDto request,
         CancellationToken cancellationToken)
@@ -35,7 +36,9 @@ public class ApplicationsController : ControllerBase
         {
             return Conflict(new { error = conflictError.Message });
         }
-        return CreatedAtAction(nameof(GetApplicationAsync), new { id = application.Id }, application);
+
+        // Use CreatedAtRoute with named route
+        return CreatedAtRoute("GetApplication", new { id = application.Id }, application);
     }
 
     /// <summary>
@@ -52,7 +55,7 @@ public class ApplicationsController : ControllerBase
     /// <summary>
     /// Get an application by ID.
     /// </summary>
-    [HttpGet("{id}")]
+    [HttpGet("{id}", Name = "GetApplication")]
     [ProducesResponseType(typeof(ApplicationDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApplicationDto>> GetApplicationAsync(Guid id, CancellationToken cancellationToken)

@@ -54,6 +54,21 @@ public static class OneOfExtensions
     private static BadRequestObjectResult ToErrorResult(InvalidOperationError error) =>
         new BadRequestObjectResult(CreateErrorResponse(error.Message, 400));
 
+    private static BadRequestObjectResult ToErrorResult(ValidationError error)
+    {
+        var errors = error.Errors.ToDictionary(
+            e => e.PropertyName,
+            e => new[] { e.ErrorMessage });
+
+        return new BadRequestObjectResult(new
+        {
+            type = "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+            title = "Validation Error",
+            status = 400,
+            errors
+        });
+    }
+
     private static ObjectResult ToErrorResult(FileNotFoundError error) =>
         new ObjectResult(CreateErrorResponse(error.Message, 500)) { StatusCode = 500 };
 
@@ -142,6 +157,44 @@ public static class OneOfExtensions
             success => new OkResult(),
             notFound => ToErrorResult(notFound),
             conflict => ToErrorResult(conflict)
+        );
+    }
+
+    public static ActionResult<T> ToActionResult<T>(this OneOf<T, NotFoundError, ValidationError> result)
+    {
+        return result.Match<ActionResult<T>>(
+            success => new OkObjectResult(success),
+            notFound => ToErrorResult(notFound),
+            validationError => ToErrorResult(validationError)
+        );
+    }
+
+    public static ActionResult<T> ToActionResult<T>(this OneOf<T, NotFoundError, ConflictError, ValidationError> result)
+    {
+        return result.Match<ActionResult<T>>(
+            success => new OkObjectResult(success),
+            notFound => ToErrorResult(notFound),
+            conflict => ToErrorResult(conflict),
+            validationError => ToErrorResult(validationError)
+        );
+    }
+
+    public static ActionResult ToActionResult(this OneOf<Success, NotFoundError, UnauthorizedError, ValidationError> result)
+    {
+        return result.Match<ActionResult>(
+            success => new OkResult(),
+            notFound => ToErrorResult(notFound),
+            unauthorized => ToErrorResult(unauthorized),
+            validationError => ToErrorResult(validationError)
+        );
+    }
+
+    public static ActionResult ToActionResult(this OneOf<Success, NotFoundError, UnauthorizedError> result)
+    {
+        return result.Match<ActionResult>(
+            success => new OkResult(),
+            notFound => ToErrorResult(notFound),
+            unauthorized => ToErrorResult(unauthorized)
         );
     }
 }

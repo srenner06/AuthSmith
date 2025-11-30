@@ -1,6 +1,5 @@
 using AuthSmith.Contracts.Auth;
 using AuthSmith.Domain.Entities;
-using AuthSmith.Domain.Enums;
 using AuthSmith.Domain.Errors;
 using AuthSmith.Infrastructure;
 using AuthSmith.Infrastructure.Services.Authentication;
@@ -20,7 +19,11 @@ public interface IAuthService
     /// <summary>
     /// Registers a new user for the specified application. Returns authentication tokens on success.
     /// </summary>
-    Task<OneOf<AuthResultDto, NotFoundError, InvalidOperationError>> RegisterAsync(string appKey, RegisterRequestDto request, CancellationToken cancellationToken = default);
+    /// <param name="appKey">Application key</param>
+    /// <param name="request">Registration request data</param>
+    /// <param name="requiresSelfRegistrationEnabled">If true, validates that self-registration is enabled. Set to false for programmatic registration.</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    Task<OneOf<AuthResultDto, NotFoundError, InvalidOperationError>> RegisterAsync(string appKey, RegisterRequestDto request, bool requiresSelfRegistrationEnabled, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Authenticates a user and returns access and refresh tokens.
@@ -63,7 +66,7 @@ public partial class AuthService : IAuthService
         _logger = logger;
     }
 
-    public async Task<OneOf<AuthResultDto, NotFoundError, InvalidOperationError>> RegisterAsync(string appKey, RegisterRequestDto request, CancellationToken cancellationToken = default)
+    public async Task<OneOf<AuthResultDto, NotFoundError, InvalidOperationError>> RegisterAsync(string appKey, RegisterRequestDto request, bool requiresSelfRegistrationEnabled, CancellationToken cancellationToken = default)
     {
         var application = await _dbContext.Applications
             .FirstOrDefaultAsync(a => a.Key == appKey && a.IsActive, cancellationToken);
@@ -71,7 +74,8 @@ public partial class AuthService : IAuthService
         if (application == null)
             return new NotFoundError($"Application '{appKey}' not found or inactive.");
 
-        if (application.SelfRegistrationMode != SelfRegistrationMode.Open)
+        // Check if self-registration is required and enabled
+        if (requiresSelfRegistrationEnabled && application.SelfRegistrationMode == Domain.Enums.SelfRegistrationMode.Disabled)
             return new InvalidOperationError($"Self-registration is not enabled for application '{appKey}'.");
 
         var normalizedUserName = request.Username.ToUpperInvariant();

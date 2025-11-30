@@ -11,11 +11,13 @@ public class User : BaseEntity
     public string NormalizedEmail { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
-    public DateTime? LastLoginAt { get; set; }
+    public bool EmailVerified { get; set; }
+    public DateTimeOffset? EmailVerifiedAt { get; set; }
+    public DateTimeOffset? LastLoginAt { get; set; }
 
     // Account lockout fields
     public int FailedLoginAttempts { get; set; }
-    public DateTime? LockedUntil { get; set; }
+    public DateTimeOffset? LockedUntil { get; set; }
 
     // Navigation properties
     public ICollection<UserRole> UserRoles { get; set; } = [];

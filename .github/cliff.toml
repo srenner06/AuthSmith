@@ -1,0 +1,45 @@
+[changelog]
+header = ""
+footer = ""
+trim = true
+
+body = """
+{% if version %}
+## {{ version }} ({{ timestamp | date(format="%Y-%m-%d") }})
+{% endif %}
+
+{% for group, items in commits
+  | filter(attribute="merge_commit", value=false)
+  | group_by(attribute="group") %}
+### {{ group | upper_first }}
+{% for c in items %}
+- {% if c.scope %}*({{ c.scope }})* {% endif %}{% if c.breaking %}[**breaking**] {% endif %}{{ c.message | trim }} ({{ c.id | truncate(length=7, end="") }})
+{% endfor %}
+
+{% endfor %}
+
+{% set b = commits | filter(attribute="breaking", value=true) %}
+{% if b | length > 0 %}
+### ?? Breaking Changes
+{% for c in b %}
+- {{ c.breaking_description | default(value=c.message) | trim }} ({{ c.id | truncate(length=7, end="") }})
+{% endfor %}
+{% endif %}
+"""
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+tag_pattern = "^v\\d+\\.\\d+\\.\\d+$"
+
+commit_parsers = [
+  { message = "^feat",              group = "Features" },
+  { message = "^feature",           group = "Features" },
+  { message = "^fix",               group = "Fixes" },
+  { message = "^perf",              group = "Performance" },
+  { message = "^refactor",          group = "Refactoring" },
+  { message = "^docs",              group = "Documentation" },
+  { message = "^style",             group = "Styling" },
+  { message = "^test",              group = "Tests" },
+  { message = "^(ci|cicd|build|chore)",  group = "CI / Build / Chore" }
+]

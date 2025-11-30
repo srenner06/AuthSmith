@@ -2,6 +2,7 @@ using AuthSmith.Infrastructure.Configuration;
 using AuthSmith.Infrastructure.Services.Authentication;
 using AuthSmith.Infrastructure.Services.Caching;
 using AuthSmith.Infrastructure.Services.Database;
+using AuthSmith.Infrastructure.Services.Email;
 using AuthSmith.Infrastructure.Services.Tokens;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -16,7 +17,7 @@ namespace AuthSmith.Infrastructure;
 /// <summary>
 /// Extension methods for registering infrastructure services.
 /// </summary>
-public static partial class InfrastructureExtensions
+public static class InfrastructureExtensions
 {
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
@@ -28,6 +29,7 @@ public static partial class InfrastructureExtensions
         services.Configure<JwtConfiguration>(configuration.GetSection(JwtConfiguration.SectionName));
         services.Configure<RedisConfiguration>(configuration.GetSection(RedisConfiguration.SectionName));
         services.Configure<OpenTelemetryConfiguration>(configuration.GetSection(OpenTelemetryConfiguration.SectionName));
+        services.Configure<EmailConfiguration>(configuration.GetSection(EmailConfiguration.SectionName));
 
         // Validate and get database configuration
         var databaseConfig = configuration.GetSection(DatabaseConfiguration.SectionName).Get<DatabaseConfiguration>()
@@ -60,12 +62,31 @@ public static partial class InfrastructureExtensions
         // Refresh token service
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
+        // Email service - always register (even if disabled, for DI purposes)
+        var emailConfig = configuration.GetSection(EmailConfiguration.SectionName).Get<EmailConfiguration>();
+        if (emailConfig?.Enabled == true)
+        {
+            services.AddScoped<IEmailService, SmtpEmailService>();
+        }
+        else
+        {
+            // Register null implementation for DI resolution
+            services.AddScoped<IEmailService>(sp => null!);
+        }
+
         // Permission caching
         var redisConfig = configuration.GetSection(RedisConfiguration.SectionName).Get<RedisConfiguration>()
             ?? new RedisConfiguration();
 
         if (redisConfig.Enabled && !string.IsNullOrWhiteSpace(redisConfig.ConnectionString))
         {
+            // Add Redis distributed cache for rate limiting
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = redisConfig.ConnectionString;
+                options.InstanceName = "AuthSmith:";
+            });
+
             services.AddSingleton<IConnectionMultiplexer>(sp =>
             {
                 try
@@ -76,7 +97,7 @@ public static partial class InfrastructureExtensions
                 {
                     // Log and fallback to in-memory
                     var logger = sp.GetRequiredService<ILogger<RedisPermissionCache>>();
-                    LogFailedToConnectToRedis(logger, ex);
+                    logger.LogWarning(ex, "Failed to connect to Redis, falling back to in-memory cache");
                     throw; // Will be caught by the factory below
                 }
             });
@@ -100,6 +121,8 @@ public static partial class InfrastructureExtensions
         }
         else
         {
+            // Use in-memory distributed cache when Redis is disabled
+            services.AddDistributedMemoryCache();
             services.AddMemoryCache();
             services.AddSingleton<IPermissionCache, InMemoryPermissionCache>();
         }
@@ -109,8 +132,5 @@ public static partial class InfrastructureExtensions
 
         return services;
     }
-
-    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Failed to connect to Redis, falling back to in-memory cache")]
-    private static partial void LogFailedToConnectToRedis(ILogger logger, Exception ex);
 }
 

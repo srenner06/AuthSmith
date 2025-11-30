@@ -1,10 +1,10 @@
 namespace AuthSmith.Domain.Interfaces;
 
 /// <summary>
-/// Interface for entities that track update timestamp.
+/// Interface for entities that track last update timestamp.
 /// </summary>
 public interface IUpdated
 {
-    DateTime UpdatedAt { get; set; }
+    DateTimeOffset? UpdatedAt { get; set; }
 }
 
