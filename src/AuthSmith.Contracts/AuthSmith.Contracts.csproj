@@ -4,31 +4,6 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    
-    <!-- NuGet Package Metadata -->
-    <PackageId>AuthSmith.Contracts</PackageId>
-    <Version>1.0.0</Version>
-    <Authors>Sullivan Renner</Authors>
-    <Company>AuthSmith</Company>
-    <Description>Data transfer objects and contracts for AuthSmith authentication service</Description>
-    <PackageTags>authsmith;authentication;contracts;dtos</PackageTags>
-    <PackageProjectUrl>https://github.com/srenner06/AuthSmith</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/srenner06/AuthSmith</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\AuthSmith.Domain\AuthSmith.Domain.csproj" />
-  </ItemGroup>
 
 </Project>

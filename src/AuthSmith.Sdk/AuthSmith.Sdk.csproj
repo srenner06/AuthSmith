@@ -28,7 +28,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AuthSmith.Contracts\AuthSmith.Contracts.csproj" />
+    <!-- Include Contracts project inline (not as separate package dependency) -->
+    <ProjectReference Include="..\AuthSmith.Contracts\AuthSmith.Contracts.csproj" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
@@ -36,5 +37,16 @@
     <PackageReference Include="Polly.Extensions.Http" />
     <PackageReference Include="Refit" />
   </ItemGroup>
+
+  <!-- Include Contracts assembly in the package -->
+  <Target Name="IncludeReferencedProjects" BeforeTargets="_GetPackageFiles">
+    <ItemGroup>
+      <_PackageFiles Include="$(OutputPath)AuthSmith.Contracts.dll">
+        <PackagePath>lib\$(TargetFramework)</PackagePath>
+        <Visible>false</Visible>
+        <BuildAction>Content</BuildAction>
+      </_PackageFiles>
+    </ItemGroup>
+  </Target>
 
 </Project>

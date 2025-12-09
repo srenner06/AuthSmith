@@ -1,3 +1,4 @@
+using AuthSmith.Application.Mapping;
 using AuthSmith.Contracts.Applications;
 using AuthSmith.Domain.Errors;
 using AuthSmith.Infrastructure;
@@ -78,7 +79,7 @@ public partial class ApplicationService : IApplicationService
         {
             Key = request.Key.ToLowerInvariant(), // ToLowerInvariant is fine here - not in query
             Name = request.Name,
-            SelfRegistrationMode = request.SelfRegistrationMode,
+            SelfRegistrationMode = request.SelfRegistrationMode.ToDomain(),
             AccountLockoutEnabled = request.AccountLockoutEnabled,
             MaxFailedLoginAttempts = request.MaxFailedLoginAttempts,
             LockoutDurationMinutes = request.LockoutDurationMinutes,
@@ -125,7 +126,7 @@ public partial class ApplicationService : IApplicationService
             application.Name = request.Name;
 
         if (request.SelfRegistrationMode.HasValue)
-            application.SelfRegistrationMode = request.SelfRegistrationMode.Value;
+            application.SelfRegistrationMode = request.SelfRegistrationMode.Value.ToDomain();
 
         if (request.DefaultRoleId.HasValue)
         {
@@ -187,7 +188,7 @@ public partial class ApplicationService : IApplicationService
             Id = application.Id,
             Key = application.Key,
             Name = application.Name,
-            SelfRegistrationMode = application.SelfRegistrationMode,
+            SelfRegistrationMode = application.SelfRegistrationMode.ToContract(),
             DefaultRoleId = application.DefaultRoleId,
             IsActive = application.IsActive,
             AccountLockoutEnabled = application.AccountLockoutEnabled,

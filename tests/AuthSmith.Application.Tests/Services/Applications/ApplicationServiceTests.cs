@@ -48,7 +48,7 @@ public class ApplicationServiceTests : TestBase
         {
             Key = "testapp",
             Name = "Test Application",
-            SelfRegistrationMode = SelfRegistrationMode.Open,
+            SelfRegistrationMode = Contracts.Enums.SelfRegistrationMode.Open,
             AccountLockoutEnabled = true,
             MaxFailedLoginAttempts = 5,
             LockoutDurationMinutes = 15

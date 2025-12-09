@@ -1,4 +1,4 @@
-using AuthSmith.Domain.Enums;
+using AuthSmith.Contracts.Enums;
 
 namespace AuthSmith.Contracts.Applications;
 

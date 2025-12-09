@@ -168,25 +168,20 @@ jobs:
           fi
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
-      - name: Update package versions
+      - name: Update package version
         shell: bash
         run: |
           VERSION="${{ steps.vars.outputs.version }}"
           sed -i "s/<Version>.*<\/Version>/<Version>${VERSION}<\/Version>/" src/AuthSmith.Sdk/AuthSmith.Sdk.csproj
-          sed -i "s/<Version>.*<\/Version>/<Version>${VERSION}<\/Version>/" src/AuthSmith.Contracts/AuthSmith.Contracts.csproj
 
       - name: Restore dependencies
         run: dotnet restore
 
-      - name: Build packages
-        run: |
-          dotnet build src/AuthSmith.Contracts/AuthSmith.Contracts.csproj -c Release --no-restore
-          dotnet build src/AuthSmith.Sdk/AuthSmith.Sdk.csproj -c Release --no-restore
+      - name: Build SDK package
+        run: dotnet build src/AuthSmith.Sdk/AuthSmith.Sdk.csproj -c Release --no-restore
 
-      - name: Pack NuGet packages
-        run: |
-          dotnet pack src/AuthSmith.Contracts/AuthSmith.Contracts.csproj -c Release --no-build -o ./nupkgs
-          dotnet pack src/AuthSmith.Sdk/AuthSmith.Sdk.csproj -c Release --no-build -o ./nupkgs
+      - name: Pack NuGet package
+        run: dotnet pack src/AuthSmith.Sdk/AuthSmith.Sdk.csproj -c Release --no-build -o ./nupkgs
 
       - name: List packages
         run: ls -lah ./nupkgs
