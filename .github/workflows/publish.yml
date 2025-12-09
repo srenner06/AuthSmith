@@ -34,7 +34,11 @@ jobs:
         run: dotnet build --no-restore -c Release
 
       - name: Run tests
-        run: dotnet test --no-build -c Release --verbosity normal
+        run: |
+          cd tests/AuthSmith.Application.Tests
+          dotnet run --configuration Release
+          cd ../AuthSmith.Api.Tests
+          dotnet run --configuration Release
 
   docker:
     runs-on: ubuntu-latest
