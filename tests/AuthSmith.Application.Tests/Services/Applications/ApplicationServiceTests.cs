@@ -29,12 +29,16 @@ public class ApplicationServiceTests : TestBase
         dbContext ??= CreateDbContext();
         apiKeyHasher ??= Helpers.MockFactory.CreateApiKeyHasher();
         permissionCache ??= Helpers.MockFactory.CreatePermissionCache();
+        var auditService = Helpers.MockFactory.CreateAuditService();
+        var requestContext = Helpers.MockFactory.CreateRequestContextService();
         logger ??= CreateLoggerMock<ApplicationService>();
 
         return new ApplicationService(
             dbContext,
             apiKeyHasher.Object,
             permissionCache.Object,
+            auditService.Object,
+            requestContext.Object,
             logger.Object);
     }
 

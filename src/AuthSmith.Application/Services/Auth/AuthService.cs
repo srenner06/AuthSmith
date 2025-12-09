@@ -1,5 +1,8 @@
+using AuthSmith.Application.Services.Audit;
+using AuthSmith.Application.Services.Context;
 using AuthSmith.Contracts.Auth;
 using AuthSmith.Domain.Entities;
+using AuthSmith.Domain.Enums;
 using AuthSmith.Domain.Errors;
 using AuthSmith.Infrastructure;
 using AuthSmith.Infrastructure.Services.Authentication;
@@ -49,6 +52,8 @@ public partial class AuthService : IAuthService
     private readonly IRefreshTokenService _refreshTokenService;
     private readonly IAccountLockoutService _accountLockoutService;
     private readonly IEmailVerificationService _emailVerificationService;
+    private readonly IAuditService _auditService;
+    private readonly IRequestContextService _requestContext;
     private readonly ILogger<AuthService> _logger;
 
     public AuthService(
@@ -58,6 +63,8 @@ public partial class AuthService : IAuthService
         IRefreshTokenService refreshTokenService,
         IAccountLockoutService accountLockoutService,
         IEmailVerificationService emailVerificationService,
+        IAuditService auditService,
+        IRequestContextService requestContext,
         ILogger<AuthService> logger)
     {
         _dbContext = dbContext;
@@ -66,6 +73,8 @@ public partial class AuthService : IAuthService
         _refreshTokenService = refreshTokenService;
         _accountLockoutService = accountLockoutService;
         _emailVerificationService = emailVerificationService;
+        _auditService = auditService;
+        _requestContext = requestContext;
         _logger = logger;
     }
 
@@ -151,6 +160,17 @@ public partial class AuthService : IAuthService
                 _logger.LogError(ex, "Failed to send verification email to user {UserId}", user.Id);
                 // Continue with registration even if email fails
             }
+
+            // Audit log successful registration
+            await _auditService.LogAsync(
+                AuditEventType.UserRegistered,
+                user.Id,
+                application.Id,
+                ipAddress: _requestContext.GetClientIpAddress(),
+                userAgent: _requestContext.GetUserAgent(),
+                success: true,
+                details: new { userName = user.UserName, email = user.Email },
+                cancellationToken: cancellationToken);
         }
 
         var authResult = await GenerateAuthResultAsync(user, application, cancellationToken);
@@ -192,10 +212,28 @@ public partial class AuthService : IAuthService
             return new UnauthorizedError("Account is locked. Please try again later.");
         }
 
+        if (await _accountLockoutService.IsAccountLockedAsync(user, application, cancellationToken))
+        {
+            LogLoginAttemptLockedAccount(_logger, user.Id);
+            return new UnauthorizedError("Account is locked. Please try again later.");
+        }
+
         if (!_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
         {
             await _accountLockoutService.RecordFailedLoginAttemptAsync(user, application, cancellationToken);
             LogInvalidPassword(_logger, user.Id);
+            
+            // Audit log failed login
+            await _auditService.LogAsync(
+                AuditEventType.LoginFailed,
+                user.Id,
+                application.Id,
+                ipAddress: _requestContext.GetClientIpAddress(),
+                userAgent: _requestContext.GetUserAgent(),
+                success: false,
+                errorMessage: "Invalid password",
+                cancellationToken: cancellationToken);
+
             return new UnauthorizedError("Invalid credentials.");
         }
 
@@ -203,6 +241,16 @@ public partial class AuthService : IAuthService
         user.LastLoginAt = DateTimeOffset.UtcNow;
         await _dbContext.SaveChangesAsync(cancellationToken);
         LogSuccessfulLogin(_logger, user.Id, request.AppKey);
+
+        // Audit log successful login
+        await _auditService.LogAsync(
+            AuditEventType.UserLoggedIn,
+            user.Id,
+            application.Id,
+            ipAddress: _requestContext.GetClientIpAddress(),
+            userAgent: _requestContext.GetUserAgent(),
+            success: true,
+            cancellationToken: cancellationToken);
 
         var authResult = await GenerateAuthResultAsync(user, application, cancellationToken);
         return authResult.Match<OneOf<AuthResultDto, NotFoundError, UnauthorizedError>>(
@@ -240,6 +288,16 @@ public partial class AuthService : IAuthService
 
                 LogRefreshingToken(_logger, user.Id, application.Key);
 
+                // Audit log token refresh
+                await _auditService.LogAsync(
+                    AuditEventType.RefreshTokenUsed,
+                    user.Id,
+                    application.Id,
+                    ipAddress: _requestContext.GetClientIpAddress(),
+                    userAgent: _requestContext.GetUserAgent(),
+                    success: true,
+                    cancellationToken: cancellationToken);
+
                 var authResult = await GenerateAuthResultAsync(user, application, cancellationToken);
                 return authResult.Match<OneOf<AuthResultDto, UnauthorizedError, NotFoundError>>(
                     result => result,
@@ -255,6 +313,17 @@ public partial class AuthService : IAuthService
     {
         await _refreshTokenService.RevokeRefreshTokenAsync(refreshToken, cancellationToken);
         LogRefreshTokenRevoked(_logger);
+        
+        // Audit log token revocation
+        await _auditService.LogAsync(
+            AuditEventType.RefreshTokenRevoked,
+            userId: _requestContext.GetCurrentUserId(),
+            applicationId: null,
+            ipAddress: _requestContext.GetClientIpAddress(),
+            userAgent: _requestContext.GetUserAgent(),
+            success: true,
+            cancellationToken: cancellationToken);
+
         return Success.Instance;
     }
 

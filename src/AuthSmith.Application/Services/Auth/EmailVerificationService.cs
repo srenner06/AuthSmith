@@ -1,6 +1,9 @@
 using System.Security.Cryptography;
+using AuthSmith.Application.Services.Audit;
+using AuthSmith.Application.Services.Context;
 using AuthSmith.Contracts.Auth;
 using AuthSmith.Domain.Entities;
+using AuthSmith.Domain.Enums;
 using AuthSmith.Domain.Errors;
 using AuthSmith.Infrastructure;
 using AuthSmith.Infrastructure.Services.Email;
@@ -35,15 +38,21 @@ public class EmailVerificationService : IEmailVerificationService
 {
     private readonly AuthSmithDbContext _dbContext;
     private readonly IEmailService? _emailService;
+    private readonly IAuditService _auditService;
+    private readonly IRequestContextService _requestContext;
     private readonly ILogger<EmailVerificationService> _logger;
 
     public EmailVerificationService(
         AuthSmithDbContext dbContext,
         IEmailService? emailService,
+        IAuditService auditService,
+        IRequestContextService requestContext,
         ILogger<EmailVerificationService> logger)
     {
         _dbContext = dbContext;
         _emailService = emailService;
+        _auditService = auditService;
+        _requestContext = requestContext;
         _logger = logger;
     }
 
@@ -104,6 +113,17 @@ public class EmailVerificationService : IEmailVerificationService
 
         _dbContext.EmailVerificationTokens.Add(verificationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        // Audit log email verification sent
+        await _auditService.LogAsync(
+            AuditEventType.EmailVerificationSent,
+            user.Id,
+            applicationId: null,
+            ipAddress: _requestContext.GetClientIpAddress(),
+            userAgent: _requestContext.GetUserAgent(),
+            success: true,
+            details: new { email = user.Email },
+            cancellationToken: cancellationToken);
 
         // Send email (async, don't wait) - only if email service is configured
         if (_emailService != null)
@@ -173,6 +193,17 @@ public class EmailVerificationService : IEmailVerificationService
         _dbContext.Entry(verificationToken).State = EntityState.Modified;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        // Audit log email verified
+        await _auditService.LogAsync(
+            AuditEventType.EmailVerified,
+            verificationToken.UserId,
+            applicationId: null,
+            ipAddress: _requestContext.GetClientIpAddress(),
+            userAgent: _requestContext.GetUserAgent(),
+            success: true,
+            details: new { email = user.Email },
+            cancellationToken: cancellationToken);
 
         _logger.LogInformation("Email verified for user {UserId}", verificationToken.UserId);
 

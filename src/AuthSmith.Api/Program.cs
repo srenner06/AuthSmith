@@ -58,6 +58,7 @@ public class Program
 
             // Configure services
             builder.Services
+                .AddHttpContextAccessor() // Required for RequestContextService
                 .AddOpenTelemetryObservability(builder.Configuration, builder.Environment.EnvironmentName)
                 .AddConfiguredCors(builder.Configuration)
                 .Configure<RateLimitConfiguration>(builder.Configuration.GetSection(RateLimitConfiguration.SectionName))
@@ -66,6 +67,9 @@ public class Program
                 .AddApplication()
                 .AddApiAuthentication()
                 .AddConfiguredHealthChecks(builder.Configuration);
+
+            // Register Request Context Service
+            builder.Services.AddScoped<AuthSmith.Application.Services.Context.IRequestContextService, AuthSmith.Api.Services.RequestContextService>();
 
             var app = builder.Build();
 

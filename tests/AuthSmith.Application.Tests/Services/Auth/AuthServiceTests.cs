@@ -43,6 +43,8 @@ public class AuthServiceTests : TestBase
         var wasMockProvided = accountLockoutService != null;
         accountLockoutService ??= new Mock<IAccountLockoutService>();
         emailVerificationService ??= new Mock<IEmailVerificationService>();
+        var auditService = Helpers.MockFactory.CreateAuditService();
+        var requestContext = Helpers.MockFactory.CreateRequestContextService();
         logger ??= CreateLoggerMock<AuthService>();
 
         // Only set up default behavior if we created a new mock (not provided by test)
@@ -64,6 +66,8 @@ public class AuthServiceTests : TestBase
             refreshTokenService.Object,
             accountLockoutService.Object,
             emailVerificationService.Object,
+            auditService.Object,
+            requestContext.Object,
             logger.Object);
     }
 

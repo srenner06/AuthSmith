@@ -1,5 +1,8 @@
+using AuthSmith.Application.Services.Audit;
+using AuthSmith.Application.Services.Context;
 using AuthSmith.Contracts.Roles;
 using AuthSmith.Domain.Entities;
+using AuthSmith.Domain.Enums;
 using AuthSmith.Domain.Errors;
 using AuthSmith.Infrastructure;
 using AuthSmith.Infrastructure.Services.Caching;
@@ -49,15 +52,21 @@ public class RoleService : IRoleService
 {
     private readonly AuthSmithDbContext _dbContext;
     private readonly IPermissionCache _permissionCache;
+    private readonly IAuditService _auditService;
+    private readonly IRequestContextService _requestContext;
     private readonly ILogger<RoleService> _logger;
 
     public RoleService(
         AuthSmithDbContext dbContext,
         IPermissionCache permissionCache,
+        IAuditService auditService,
+        IRequestContextService requestContext,
         ILogger<RoleService> logger)
     {
         _dbContext = dbContext;
         _permissionCache = permissionCache;
+        _auditService = auditService;
+        _requestContext = requestContext;
         _logger = logger;
     }
 
@@ -139,6 +148,17 @@ public class RoleService : IRoleService
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
+        // Audit log permission assigned to role
+        await _auditService.LogAsync(
+            AuditEventType.PermissionGranted,
+            userId: _requestContext.GetCurrentUserId(),
+            appId,
+            ipAddress: _requestContext.GetClientIpAddress(),
+            userAgent: _requestContext.GetUserAgent(),
+            success: true,
+            details: new { roleId, permissionId },
+            cancellationToken: cancellationToken);
+
         var userIds = await _dbContext.UserRoles
             .Where(ur => ur.RoleId == roleId)
             .Select(ur => ur.UserId)
@@ -162,6 +182,17 @@ public class RoleService : IRoleService
 
         _dbContext.RolePermissions.Remove(rolePermission);
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        // Audit log permission revoked from role
+        await _auditService.LogAsync(
+            AuditEventType.PermissionRevoked,
+            userId: _requestContext.GetCurrentUserId(),
+            appId,
+            ipAddress: _requestContext.GetClientIpAddress(),
+            userAgent: _requestContext.GetUserAgent(),
+            success: true,
+            details: new { roleId, permissionId },
+            cancellationToken: cancellationToken);
 
         var userIds = await _dbContext.UserRoles
             .Where(ur => ur.RoleId == roleId)
@@ -195,6 +226,7 @@ public class RoleService : IRoleService
         {
             await _permissionCache.InvalidateUserPermissionsAsync(userId, appId, cancellationToken);
         }
+
         return Success.Instance;
     }
 

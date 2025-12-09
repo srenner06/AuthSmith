@@ -1,5 +1,8 @@
 using AuthSmith.Application.Mapping;
+using AuthSmith.Application.Services.Audit;
+using AuthSmith.Application.Services.Context;
 using AuthSmith.Contracts.Applications;
+using AuthSmith.Domain.Enums;
 using AuthSmith.Domain.Errors;
 using AuthSmith.Infrastructure;
 using AuthSmith.Infrastructure.Services.Authentication;
@@ -47,17 +50,23 @@ public partial class ApplicationService : IApplicationService
     private readonly AuthSmithDbContext _dbContext;
     private readonly IApiKeyHasher _apiKeyHasher;
     private readonly IPermissionCache _permissionCache;
+    private readonly IAuditService _auditService;
+    private readonly IRequestContextService _requestContext;
     private readonly ILogger<ApplicationService> _logger;
 
     public ApplicationService(
         AuthSmithDbContext dbContext,
         IApiKeyHasher apiKeyHasher,
         IPermissionCache permissionCache,
+        IAuditService auditService,
+        IRequestContextService requestContext,
         ILogger<ApplicationService> logger)
     {
         _dbContext = dbContext;
         _apiKeyHasher = apiKeyHasher;
         _permissionCache = permissionCache;
+        _auditService = auditService;
+        _requestContext = requestContext;
         _logger = logger;
     }
 
@@ -91,6 +100,17 @@ public partial class ApplicationService : IApplicationService
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         LogCreatedApplication(_logger, application.Id, application.Key);
+
+        // Audit log application created
+        await _auditService.LogAsync(
+            AuditEventType.ApplicationCreated,
+            userId: _requestContext.GetCurrentUserId(),
+            application.Id,
+            ipAddress: _requestContext.GetClientIpAddress(),
+            userAgent: _requestContext.GetUserAgent(),
+            success: true,
+            details: new { key = application.Key, name = application.Name },
+            cancellationToken: cancellationToken);
 
         return MapToDto(application);
     }
@@ -155,6 +175,16 @@ public partial class ApplicationService : IApplicationService
         await _dbContext.SaveChangesAsync(cancellationToken);
         await _permissionCache.InvalidateApplicationPermissionsAsync(application.Id, cancellationToken);
 
+        // Audit log application updated
+        await _auditService.LogAsync(
+            AuditEventType.ApplicationUpdated,
+            userId: _requestContext.GetCurrentUserId(),
+            application.Id,
+            ipAddress: _requestContext.GetClientIpAddress(),
+            userAgent: _requestContext.GetUserAgent(),
+            success: true,
+            cancellationToken: cancellationToken);
+
         return MapToDto(application);
     }
 
@@ -171,6 +201,16 @@ public partial class ApplicationService : IApplicationService
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         LogGeneratedApiKey(_logger, id);
+
+        // Audit log API key generated
+        await _auditService.LogAsync(
+            AuditEventType.ApiKeyGenerated,
+            userId: _requestContext.GetCurrentUserId(),
+            application.Id,
+            ipAddress: _requestContext.GetClientIpAddress(),
+            userAgent: _requestContext.GetUserAgent(),
+            success: true,
+            cancellationToken: cancellationToken);
 
         return apiKey;
     }

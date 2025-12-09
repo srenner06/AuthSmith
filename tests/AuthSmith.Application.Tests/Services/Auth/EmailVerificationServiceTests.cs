@@ -27,11 +27,15 @@ public class EmailVerificationServiceTests : TestBase
         Mock<ILogger<EmailVerificationService>>? logger = null)
     {
         dbContext ??= CreateDbContext();
+        var auditService = Helpers.MockFactory.CreateAuditService();
+        var requestContext = Helpers.MockFactory.CreateRequestContextService();
         logger ??= CreateLoggerMock<EmailVerificationService>();
 
         return new EmailVerificationService(
             dbContext,
             emailService?.Object,
+            auditService.Object,
+            requestContext.Object,
             logger.Object);
     }
 

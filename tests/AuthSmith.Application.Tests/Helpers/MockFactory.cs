@@ -1,3 +1,6 @@
+using AuthSmith.Application.Services.Audit;
+using AuthSmith.Application.Services.Context;
+using AuthSmith.Domain.Enums;
 using AuthSmith.Infrastructure.Services.Authentication;
 using AuthSmith.Infrastructure.Services.Caching;
 using AuthSmith.Infrastructure.Services.Tokens;
@@ -70,6 +73,32 @@ public static class MockFactory
                 It.IsAny<Guid>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((HashSet<string>?)null);
+        return mock;
+    }
+
+    public static Mock<IAuditService> CreateAuditService()
+    {
+        var mock = new Mock<IAuditService>();
+        mock.Setup(x => x.LogAsync(
+                It.IsAny<AuditEventType>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                It.IsAny<bool>(),
+                It.IsAny<object?>(),
+                It.IsAny<string?>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        return mock;
+    }
+
+    public static Mock<IRequestContextService> CreateRequestContextService()
+    {
+        var mock = new Mock<IRequestContextService>();
+        mock.Setup(x => x.GetClientIpAddress()).Returns("127.0.0.1");
+        mock.Setup(x => x.GetUserAgent()).Returns("Test-Agent/1.0");
+        mock.Setup(x => x.GetCurrentUserId()).Returns((Guid?)null);
         return mock;
     }
 

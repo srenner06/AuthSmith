@@ -26,11 +26,15 @@ public class RoleServiceTests : TestBase
     {
         dbContext ??= CreateDbContext();
         permissionCache ??= Helpers.MockFactory.CreatePermissionCache();
+        var auditService = Helpers.MockFactory.CreateAuditService();
+        var requestContext = Helpers.MockFactory.CreateRequestContextService();
         logger ??= CreateLoggerMock<RoleService>();
 
         return new RoleService(
             dbContext,
             permissionCache.Object,
+            auditService.Object,
+            requestContext.Object,
             logger.Object);
     }
 

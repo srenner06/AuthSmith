@@ -1,6 +1,9 @@
 using System.Security.Cryptography;
+using AuthSmith.Application.Services.Audit;
+using AuthSmith.Application.Services.Context;
 using AuthSmith.Contracts.Auth;
 using AuthSmith.Domain.Entities;
+using AuthSmith.Domain.Enums;
 using AuthSmith.Domain.Errors;
 using AuthSmith.Infrastructure;
 using AuthSmith.Infrastructure.Services.Authentication;
@@ -37,17 +40,23 @@ public class PasswordResetService : IPasswordResetService
     private readonly AuthSmithDbContext _dbContext;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IEmailService? _emailService;
+    private readonly IAuditService _auditService;
+    private readonly IRequestContextService _requestContext;
     private readonly ILogger<PasswordResetService> _logger;
 
     public PasswordResetService(
         AuthSmithDbContext dbContext,
         IPasswordHasher passwordHasher,
         IEmailService? emailService,
+        IAuditService auditService,
+        IRequestContextService requestContext,
         ILogger<PasswordResetService> logger)
     {
         _dbContext = dbContext;
         _passwordHasher = passwordHasher;
         _emailService = emailService;
+        _auditService = auditService;
+        _requestContext = requestContext;
         _logger = logger;
     }
 
@@ -106,6 +115,17 @@ public class PasswordResetService : IPasswordResetService
 
         _dbContext.PasswordResetTokens.Add(resetToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        // Audit log password reset requested
+        await _auditService.LogAsync(
+            AuditEventType.PasswordResetRequested,
+            user.Id,
+            application.Id,
+            ipAddress: _requestContext.GetClientIpAddress(),
+            userAgent: _requestContext.GetUserAgent(),
+            success: true,
+            details: new { email = user.Email },
+            cancellationToken: cancellationToken);
 
         // Send email (async, don't wait) - only if email service is configured
         if (_emailService != null)
@@ -190,6 +210,16 @@ public class PasswordResetService : IPasswordResetService
         resetToken.UsedAt = DateTimeOffset.UtcNow;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        // Audit log password reset completed
+        await _auditService.LogAsync(
+            AuditEventType.PasswordResetCompleted,
+            resetToken.UserId,
+            applicationId: null,
+            ipAddress: _requestContext.GetClientIpAddress(),
+            userAgent: _requestContext.GetUserAgent(),
+            success: true,
+            cancellationToken: cancellationToken);
 
         // Send confirmation email (async, don't wait) - only if email service is configured
         if (_emailService != null)
