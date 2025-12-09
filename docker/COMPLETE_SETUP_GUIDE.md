@@ -56,12 +56,12 @@ docker-compose up -d
 **Expected output:**
 ```
 [+] Running 6/6
- ? Network docker_authsmith-network  Created
- ? Container authsmith-db            Started
- ? Container authsmith-redis         Started
- ? Container authsmith-mailhog       Started
- ? Container authsmith-jaeger        Started
- ? Container authsmith-api           Started
+ ? Network docker_authsmith-network     Created
+ ? Container authsmith-db               Started
+ ? Container authsmith-redis            Started
+ ? Container authsmith-mailhog          Started
+ ? Container authsmith-aspire-dashboard Started
+ ? Container authsmith-api              Started
 ```
 
 ### **3. Verify Services**
@@ -80,7 +80,7 @@ curl http://localhost:8080/health
 
 - **API Swagger**: http://localhost:8080/swagger
 - **MailHog (Email Testing)**: http://localhost:8025
-- **Jaeger (Distributed Tracing)**: http://localhost:16686
+- **.NET Aspire Dashboard (Observability)**: http://localhost:18888
 
 ---
 
@@ -92,7 +92,7 @@ curl http://localhost:8080/health
 | **PostgreSQL** | 5433 | Database (note: non-standard port to avoid conflicts) |
 | **Redis** | 6379 | Distributed cache & rate limiting |
 | **MailHog** | 8025 | Email testing (catches all outgoing emails) |
-| **Jaeger** | 16686 | Distributed tracing & observability |
+| **.NET Aspire Dashboard** | 18888 | Unified observability: traces, metrics & logs |
 
 ---
 
@@ -100,25 +100,25 @@ curl http://localhost:8080/health
 
 ### **Environment Variables**
 
-All configured in `docker-compose.yml`. Key settings:
+All configured in `.env` file. Key settings:
 
-```yaml
+```bash
 # Database
-Database__AutoMigrate: "true"  # Automatically applies migrations on startup
+DATABASE_AUTO_MIGRATE=true  # Automatically applies migrations on startup
 
 # Email (MailHog for local development)
-Email__Enabled: "true"
-Email__SmtpHost: "mailhog"
+EMAIL_ENABLED=true
+EMAIL_SMTP_HOST=mailhog
 
 # Redis
-Redis__Enabled: "true"
+REDIS_ENABLED=true
 
 # OpenTelemetry
-OpenTelemetry__Enabled: "true"
-OpenTelemetry__Endpoint: "http://jaeger:4317"
+OTEL_ENABLED=true
+OTEL_ENDPOINT=http://aspire-dashboard:18889
 
 # Rate Limiting
-RateLimit__Enabled: "true"
+RATE_LIMIT_ENABLED=true
 ```
 
 ---
@@ -145,7 +145,7 @@ RateLimit__Enabled: "true"
 ### **Observability**:
 - ? Serilog structured logging
 - ? OpenTelemetry distributed tracing
-- ? Jaeger trace visualization
+- ? .NET Aspire Dashboard for unified observability
 - ? Health check endpoints (`/health`, `/ready`)
 
 ---
@@ -169,12 +169,13 @@ curl -X POST http://localhost:8080/api/v1/auth/register/myapp \
 
 Open http://localhost:8025 to see the verification email.
 
-### **3. View Request Traces**
+### **3. View Request Traces and Metrics**
 
-Open http://localhost:16686:
-1. Select "AuthSmith" service
-2. Click "Find Traces"
-3. View the registration request trace
+Open http://localhost:18888 - .NET Aspire Dashboard:
+1. **Structured Logs**: Filter and search real-time logs
+2. **Traces**: View the registration request with full timing breakdown
+3. **Metrics**: Monitor live performance counters
+4. **Resources**: Check service health and connections
 
 ### **4. Test Ping Endpoint**
 
@@ -192,28 +193,29 @@ Returns version and build information.
 
 **?? Change these before deploying to production:**
 
-- Database password (`POSTGRES_PASSWORD`)
-- Admin API keys (`ApiKeys__Admin__0`, `ApiKeys__Admin__1`, etc.)
-- Disable auto-migrations (`Database__AutoMigrate: "false"`)
+- Database password (`POSTGRES_PASSWORD` in `.env`)
+- Admin API keys (`ADMIN_API_KEY` in `.env`)
+- Disable auto-migrations (`DATABASE_AUTO_MIGRATE=false`)
 - Use real SMTP server instead of MailHog
 - Enable HTTPS with proper certificates
 
 ### **Recommended Changes**
 
-```yaml
-# Production docker-compose.yml changes
-environment:
-  ASPNETCORE_ENVIRONMENT: Production
-  Database__AutoMigrate: "false"  # Run migrations manually
-  
-  # Admin API Keys (use strong, unique values)
-  ApiKeys__Admin__0: "${ADMIN_API_KEY_1}"  # From secrets manager
-  ApiKeys__Admin__1: "${ADMIN_API_KEY_2}"  # Optional: multiple keys for different admins
-  
-  # Email
-  Email__SmtpHost: "smtp.sendgrid.net"  # Real SMTP
-  Email__Username: "apikey"
-  Email__Password: "${SENDGRID_API_KEY}"  # From secrets
+```bash
+# Production .env changes
+ASPNETCORE_ENVIRONMENT=Production
+DATABASE_AUTO_MIGRATE=false  # Run migrations manually
+
+# Admin API Keys (use strong, unique values)
+ADMIN_API_KEY=<strong-random-key-from-secrets-manager>
+
+# Email
+EMAIL_SMTP_HOST=smtp.sendgrid.net  # Real SMTP
+EMAIL_USERNAME=apikey
+EMAIL_PASSWORD=<sendgrid-api-key-from-secrets>
+
+# OpenTelemetry - consider production APM
+OTEL_ENDPOINT=https://your-apm-endpoint
 ```
 
 ---
@@ -236,10 +238,10 @@ Before considering your setup complete:
 - [ ] API health check passes (`curl http://localhost:8080/health`)
 - [ ] Swagger UI accessible (http://localhost:8080/swagger)
 - [ ] MailHog UI accessible (http://localhost:8025)
-- [ ] Jaeger UI accessible (http://localhost:16686)
+- [ ] .NET Aspire Dashboard accessible (http://localhost:18888)
 - [ ] Can register a user successfully
 - [ ] Email appears in MailHog
-- [ ] Traces appear in Jaeger
+- [ ] Traces and metrics appear in Aspire Dashboard
 
 ---
 

@@ -54,7 +54,7 @@ This starts:
 - ? **PostgreSQL** (port 5433) - Database (port changed to avoid conflicts)
 - ? **Redis** (port 6379) - Caching & rate limiting
 - ? **MailHog** (port 8025) - Email testing UI
-- ? **Jaeger v2** (port 16686) - Distributed tracing UI
+- ? **.NET Aspire Dashboard** (port 18888) - Unified observability (traces, metrics, logs)
 - ? **AuthSmith API** (port 8080) - The API
 
 ### 4. Verify It's Running
@@ -69,8 +69,8 @@ docker-compose logs -f api
 # Check email UI
 open http://localhost:8025  # MailHog web interface
 
-# Check tracing UI
-open http://localhost:16686  # Jaeger web interface
+# Check observability dashboard
+open http://localhost:18888  # .NET Aspire Dashboard
 ```
 
 ### 5. Access Services
@@ -78,7 +78,7 @@ open http://localhost:16686  # Jaeger web interface
 - **API**: http://localhost:8080
 - **Swagger Documentation**: http://localhost:8080/swagger
 - **MailHog (Email Testing)**: http://localhost:8025
-- **Jaeger (Tracing)**: http://localhost:16686
+- **.NET Aspire Dashboard (Observability)**: http://localhost:18888
 - **PostgreSQL**: localhost:5433 (mapped to avoid conflicts with local PostgreSQL)
 - **Redis**: localhost:6379
 
@@ -252,23 +252,27 @@ docker run -d -p 1025:1025 -p 8025:8025 mailhog/mailhog
 OpenTelemetry provides observability into your application:
 - **Traces**: See request flow across services
 - **Metrics**: Monitor performance and resource usage
-- **Context**: Understand what's happening in production
+- **Logs**: Structured logging with context
+- **Context**: Understand what's happening in your application
 
-### Using Jaeger (Included in Docker Compose)
+### Using .NET Aspire Dashboard (Included in Docker Compose)
 
-**Jaeger** is automatically started with `docker-compose up`:
+**.NET Aspire Dashboard** is automatically started with `docker-compose up` and provides a unified observability experience:
 
-1. **Access Jaeger UI**: http://localhost:16686
-2. **Select Service**: Choose "AuthSmith" from dropdown
-3. **View Traces**: See all HTTP requests, database queries, Redis calls
-4. **Analyze Performance**: Find slow endpoints and bottlenecks
+1. **Access Dashboard**: http://localhost:18888
+2. **View Structured Logs**: Real-time logs with filtering
+3. **Explore Traces**: See all HTTP requests, database queries, Redis calls with detailed timing
+4. **Monitor Metrics**: Live performance counters and resource utilization
+5. **Inspect Resources**: Service health and dependency connections
 
 **What You Can See:**
-- HTTP request duration
-- Database query execution times
-- Redis cache hits/misses
-- Error stack traces
+- HTTP request duration and status codes
+- Database query execution times and SQL statements
+- Redis cache operations (hits/misses)
+- Error stack traces with full context
 - Request flow through middleware
+- Real-time metrics and performance counters
+- Resource health and connectivity
 
 ### Enable/Disable OpenTelemetry
 
@@ -277,7 +281,7 @@ OpenTelemetry provides observability into your application:
 {
   "OpenTelemetry": {
     "Enabled": true,
-    "Endpoint": "http://jaeger:4317",
+    "Endpoint": "http://aspire-dashboard:18889",
     "ServiceName": "AuthSmith",
     "EnableTracing": true,
     "EnableMetrics": true
@@ -296,8 +300,10 @@ OpenTelemetry provides observability into your application:
 
 ### Using Other OTLP Backends
 
-**Jaeger** is just one option. You can also use:
+**.NET Aspire Dashboard** uses the standard OTLP protocol, but you can also use other backends:
 
+- **.NET Aspire Dashboard**: `http://aspire-dashboard:18889` (recommended for .NET apps)
+- **Jaeger**: `http://jaeger:4317`
 - **Grafana Tempo**: `http://tempo:4317`
 - **Honeycomb**: `https://api.honeycomb.io` (with API key header)
 - **New Relic**: `https://otlp.nr-data.net:4317` (with API key)
@@ -401,7 +407,7 @@ Use environment variables or secret managers!
 
 ## ?? Additional Resources
 
-- [Architecture Documentation](../docs/ARCHITECTURE.md)
+- [Architecture Documentation](../docs/ARCHITECTURE.MD)
 - [API Documentation](http://localhost:8080/swagger)
 - [Contributing Guidelines](../CONTRIBUTING.md)
 - [Security Policy](../SECURITY.md)

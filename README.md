@@ -134,7 +134,7 @@ open http://localhost:8025          # MailHog (email testing)
 - ✅ PostgreSQL database
 - ✅ Redis cache
 - ✅ MailHog email testing (view emails at http://localhost:8025)
-- ✅ Jaeger distributed tracing (http://localhost:16686)
+- ✅ .NET Aspire Dashboard - unified observability (http://localhost:18888)
 - ✅ Auto-generated secure credentials
 - ✅ JWT keys automatically created
 - ✅ Auto-migrations applied
@@ -249,7 +249,7 @@ docker-compose logs api | grep "Rate Limit Configuration"
 
 ### All Configuration Variables
 
-See [docker/.env.template](docker/.env.template) for a complete list of all configurable variables with descriptions.
+See [docker/.env.example](docker/.env.example) for a complete list of all configurable variables with descriptions.
 
 **Key sections:**
 - Database configuration
@@ -257,7 +257,7 @@ See [docker/.env.template](docker/.env.template) for a complete list of all conf
 - **Rate limiting** (auth, registration, password reset limits)
 - Redis caching
 - Email (MailHog) configuration
-- OpenTelemetry/Jaeger tracing
+- OpenTelemetry / .NET Aspire Dashboard
 - Logging levels
 
 ---

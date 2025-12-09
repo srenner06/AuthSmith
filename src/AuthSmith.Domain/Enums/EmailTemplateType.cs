@@ -1,4 +1,4 @@
-namespace AuthSmith.Domain.Entities;
+namespace AuthSmith.Domain.Enums;
 
 /// <summary>
 /// Email template types for different email scenarios.

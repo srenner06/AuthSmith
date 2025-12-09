@@ -46,18 +46,20 @@ services:
     networks:
       - authsmith-network
 
-  # Jaeger (OpenTelemetry - Distributed Tracing)
-  jaeger:
-    image: jaegertracing/jaeger:2.2.0
-    container_name: authsmith-jaeger
+  # .NET Aspire Dashboard (OpenTelemetry - Distributed Tracing, Metrics, and Logs)
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:9.3
+    container_name: authsmith-aspire-dashboard
     ports:
-      - "${JAEGER_UI_PORT:-16686}:16686"   # Jaeger UI
-      - "${JAEGER_OTLP_GRPC_PORT:-4317}:4317"  # OTLP gRPC receiver
-      - "${JAEGER_OTLP_HTTP_PORT:-4318}:4318"  # OTLP HTTP receiver
+      - "${ASPIRE_DASHBOARD_PORT:-18888}:18888"   # Dashboard UI
+      - "${ASPIRE_OTLP_GRPC_PORT:-18889}:18889"  # OTLP gRPC receiver
+      - "${ASPIRE_OTLP_HTTP_PORT:-18890}:18890"  # OTLP HTTP receiver
     environment:
-      - SPAN_STORAGE_TYPE=memory
+      - DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true
+      - ASPNETCORE_URLS=http://+:18888
     networks:
       - authsmith-network
+    restart: unless-stopped
 
   # AuthSmith API
   api:
@@ -119,13 +121,14 @@ services:
       RateLimit__RedisConnectionString: "${REDIS_CONNECTION_STRING:-redis:6379}"
       
       # OpenTelemetry - From .env
-      OpenTelemetry__Enabled: "${OTEL_ENABLED:-false}"
-      OpenTelemetry__Endpoint: "${OTEL_ENDPOINT:-http://jaeger:4317}"
+      OpenTelemetry__Enabled: "${OTEL_ENABLED:-true}"
+      OpenTelemetry__Endpoint: "${OTEL_ENDPOINT:-http://aspire-dashboard:18889}"
       OpenTelemetry__ServiceName: "${OTEL_SERVICE_NAME:-AuthSmith}"
       OpenTelemetry__ServiceVersion: "${OTEL_SERVICE_VERSION:-1.0.0-dev}"
       OpenTelemetry__UseConsoleExporter: "${OTEL_USE_CONSOLE_EXPORTER:-false}"
       OpenTelemetry__EnableTracing: "${OTEL_ENABLE_TRACING:-true}"
       OpenTelemetry__EnableMetrics: "${OTEL_ENABLE_METRICS:-true}"
+      OpenTelemetry__EnableLogs: "${OTEL_ENABLE_LOGS:-true}"
       
       # Serilog - From .env
       Serilog__MinimumLevel__Default: "${SERILOG_MIN_LEVEL:-Information}"
@@ -145,7 +148,7 @@ services:
         condition: service_healthy
       mailhog:
         condition: service_started
-      jaeger:
+      aspire-dashboard:
         condition: service_started
     
     healthcheck:

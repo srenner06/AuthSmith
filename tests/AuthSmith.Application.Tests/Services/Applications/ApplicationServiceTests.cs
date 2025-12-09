@@ -1,7 +1,6 @@
 using AuthSmith.Application.Services.Applications;
 using AuthSmith.Application.Tests.Helpers;
 using AuthSmith.Contracts.Applications;
-using AuthSmith.Domain.Enums;
 using AuthSmith.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;

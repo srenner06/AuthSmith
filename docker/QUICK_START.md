@@ -78,7 +78,7 @@ open http://localhost:8080/swagger
 |---------|-----|---------|
 | **API Swagger** | http://localhost:8080/swagger | API documentation & testing |
 | **MailHog** | http://localhost:8025 | Email testing |
-| **Jaeger** | http://localhost:16686 | Distributed tracing |
+| **.NET Aspire Dashboard** | http://localhost:18888 | Observability: Traces, Metrics & Logs |
 | **PostgreSQL** | localhost:5433 | Database |
 | **Redis** | localhost:6379 | Cache |
 
@@ -167,12 +167,13 @@ curl -X POST http://localhost:8080/api/v1/auth/register/myapp \
 
 Open http://localhost:8025 - you'll see the verification email!
 
-### **3. View Traces**
+### **3. View Traces & Metrics**
 
-Open http://localhost:16686:
-1. Select "AuthSmith" service
-2. Click "Find Traces"
-3. See your request!
+Open http://localhost:18888 - .NET Aspire Dashboard shows:
+1. **Structured Logs** - Real-time application logs
+2. **Traces** - Request flow and performance
+3. **Metrics** - Live performance counters
+4. **Resources** - Service health and connections
 
 ---
 
@@ -282,7 +283,7 @@ docker-compose up -d
 - [ ] Open Swagger (http://localhost:8080/swagger)
 - [ ] Register a test user
 - [ ] Check MailHog (http://localhost:8025)
-- [ ] View traces in Jaeger (http://localhost:16686)
+- [ ] View observability in Aspire Dashboard (http://localhost:18888)
 
 ---
 

@@ -1,5 +1,5 @@
-using DomainEnums = AuthSmith.Domain.Enums;
 using ContractEnums = AuthSmith.Contracts.Enums;
+using DomainEnums = AuthSmith.Domain.Enums;
 
 namespace AuthSmith.Application.Mapping;
 

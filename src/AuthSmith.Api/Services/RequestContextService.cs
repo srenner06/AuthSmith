@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 
 namespace AuthSmith.Api.Services;
@@ -40,7 +39,7 @@ public class RequestContextService : AuthSmith.Application.Services.Context.IReq
     public string? GetUserAgent()
     {
         var context = _httpContextAccessor.HttpContext;
-        return context?.Request.Headers["User-Agent"].FirstOrDefault();
+        return context?.Request.Headers.UserAgent.FirstOrDefault();
     }
 
     public Guid? GetCurrentUserId()

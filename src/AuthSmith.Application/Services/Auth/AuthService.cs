@@ -222,7 +222,7 @@ public partial class AuthService : IAuthService
         {
             await _accountLockoutService.RecordFailedLoginAttemptAsync(user, application, cancellationToken);
             LogInvalidPassword(_logger, user.Id);
-            
+
             // Audit log failed login
             await _auditService.LogAsync(
                 AuditEventType.LoginFailed,
@@ -313,7 +313,7 @@ public partial class AuthService : IAuthService
     {
         await _refreshTokenService.RevokeRefreshTokenAsync(refreshToken, cancellationToken);
         LogRefreshTokenRevoked(_logger);
-        
+
         // Audit log token revocation
         await _auditService.LogAsync(
             AuditEventType.RefreshTokenRevoked,

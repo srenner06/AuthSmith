@@ -69,10 +69,10 @@ jobs:
           echo "version=${VERSION}"  >> "$GITHUB_OUTPUT"
           echo "commit_hash=$(git rev-parse --short=7 HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Inject version info into API (Version.cs)
+      - name: Inject version info into VersionInfo.cs
         shell: bash
         env:
-          FILE: src/AuthSmith.Api/Version.cs
+          FILE: src/AuthSmith.Infrastructure/VersionInfo.cs
           VERSION_TAG: ${{ steps.vars.outputs.raw_tag }}
         run: |
           set -euo pipefail
@@ -87,6 +87,8 @@ jobs:
             -e "s|__VERSION_TAG__|$(esc "$VERSION_TAG")|g" \
             -e "s|__COMMIT_HASH__|$(esc "$COMMIT_HASH")|g" \
             "$FILE"
+          echo "Version info injected into $FILE"
+          grep -E "(BuildNumber|BuildTime|VersionTag|CommitHash)" "$FILE" || true
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

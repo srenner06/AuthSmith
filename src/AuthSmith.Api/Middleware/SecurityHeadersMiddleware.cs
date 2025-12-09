@@ -16,19 +16,19 @@ public class SecurityHeadersMiddleware
     public async Task InvokeAsync(HttpContext context)
     {
         // X-Content-Type-Options: Prevent MIME type sniffing
-        context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+        context.Response.Headers.XContentTypeOptions = "nosniff";
 
         // X-Frame-Options: Prevent clickjacking
-        context.Response.Headers["X-Frame-Options"] = "DENY";
+        context.Response.Headers.XFrameOptions = "DENY";
 
         // X-XSS-Protection: Enable XSS protection (legacy browsers)
-        context.Response.Headers["X-XSS-Protection"] = "1; mode=block";
+        context.Response.Headers.XXSSProtection = "1; mode=block";
 
         // Referrer-Policy: Control referrer information
         context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
 
         // Content-Security-Policy: Prevent XSS and data injection attacks
-        context.Response.Headers["Content-Security-Policy"] =
+        context.Response.Headers.ContentSecurityPolicy =
             "default-src 'self'; " +
             "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " + // Swagger requires unsafe-eval
             "style-src 'self' 'unsafe-inline'; " +
@@ -53,7 +53,7 @@ public class SecurityHeadersMiddleware
         // Strict-Transport-Security: Force HTTPS (only add if HTTPS)
         if (context.Request.IsHttps)
         {
-            context.Response.Headers["Strict-Transport-Security"] =
+            context.Response.Headers.StrictTransportSecurity =
                 "max-age=31536000; includeSubDomains; preload";
         }
 

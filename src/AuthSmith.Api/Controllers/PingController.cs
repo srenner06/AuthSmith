@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using AuthSmith.Contracts.System;
+using AuthSmith.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -27,10 +28,10 @@ public class PingController : ControllerBase
 
         var response = new PingResponseDto
         {
-            VersionTag = Version.VersionTag,
-            BuildNumber = Version.BuildNumber,
-            BuildTime = Version.BuildTime,
-            CommitHash = Version.CommitHash,
+            VersionTag = VersionInfo.VersionTag,
+            BuildNumber = VersionInfo.BuildNumber,
+            BuildTime = VersionInfo.BuildTime,
+            CommitHash = VersionInfo.CommitHash,
             Message = "Alive and ready to serve",
             Authenticated = isAuthenticated
         };

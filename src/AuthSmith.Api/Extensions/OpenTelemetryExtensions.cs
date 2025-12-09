@@ -36,28 +36,28 @@ public static class OpenTelemetryExtensions
                 ["host.name"] = Environment.MachineName
             });
 
+        var openTelemetry = services.AddOpenTelemetry();
+
         // Configure Tracing
         if (otelConfig.EnableTracing)
         {
-            services.AddOpenTelemetry()
-                .WithTracing(tracerProviderBuilder =>
-                {
-                    ConfigureTracing(tracerProviderBuilder, resourceBuilder, otelConfig);
-                });
+            openTelemetry.WithTracing(tracerProviderBuilder =>
+            {
+                ConfigureTracing(tracerProviderBuilder, resourceBuilder, otelConfig);
+            });
         }
 
         // Configure Metrics
         if (otelConfig.EnableMetrics)
         {
-            services.AddOpenTelemetry()
-                .WithMetrics(meterProviderBuilder =>
-                {
-                    ConfigureMetrics(meterProviderBuilder, resourceBuilder, otelConfig);
-                });
+            openTelemetry.WithMetrics(meterProviderBuilder =>
+            {
+                ConfigureMetrics(meterProviderBuilder, resourceBuilder, otelConfig);
+            });
         }
 
-        Log.Information("OpenTelemetry configured - Service: {ServiceName}, Endpoint: {Endpoint}",
-            otelConfig.ServiceName, otelConfig.Endpoint);
+        Log.Information("OpenTelemetry configured - Service: {ServiceName}, Endpoint: {Endpoint}, Tracing: {Tracing}, Metrics: {Metrics}, Logs: {Logs}",
+            otelConfig.ServiceName, otelConfig.Endpoint, otelConfig.EnableTracing, otelConfig.EnableMetrics, otelConfig.EnableLogs);
 
         return services;
     }
@@ -98,7 +98,7 @@ public static class OpenTelemetryExtensions
                 options.Endpoint = new Uri(config.Endpoint);
 
                 // Add custom headers if configured
-                if (config.Headers.Any())
+                if (config.Headers.Count != 0)
                 {
                     foreach (var header in config.Headers)
                     {
@@ -134,7 +134,7 @@ public static class OpenTelemetryExtensions
                 options.Endpoint = new Uri(config.Endpoint);
 
                 // Add custom headers if configured
-                if (config.Headers.Any())
+                if (config.Headers.Count != 0)
                 {
                     foreach (var header in config.Headers)
                     {

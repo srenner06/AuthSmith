@@ -13,7 +13,7 @@ public class OpenTelemetryConfiguration
     public bool Enabled { get; set; }
 
     /// <summary>
-    /// OTLP endpoint URL (e.g., "http://jaeger:4317" or "http://localhost:4317").
+    /// OTLP endpoint URL (e.g., "http://aspire-dashboard:18889", "http://localhost:18889", or "http://jaeger:4317").
     /// </summary>
     public string Endpoint { get; set; } = string.Empty;
 
@@ -23,9 +23,9 @@ public class OpenTelemetryConfiguration
     public string ServiceName { get; set; } = "AuthSmith";
 
     /// <summary>
-    /// Service version (can be set from build).
+    /// Service version (defaults to build version from VersionInfo).
     /// </summary>
-    public string ServiceVersion { get; set; } = "1.0.0";
+    public string ServiceVersion { get; set; } = VersionInfo.GetVersion();
 
     /// <summary>
     /// Whether to use console exporter for development.
@@ -43,8 +43,13 @@ public class OpenTelemetryConfiguration
     public bool EnableMetrics { get; set; } = true;
 
     /// <summary>
+    /// Whether to enable logs export via OTLP.
+    /// </summary>
+    public bool EnableLogs { get; set; } = true;
+
+    /// <summary>
     /// Additional headers for OTLP export (e.g., authentication).
     /// </summary>
-    public Dictionary<string, string> Headers { get; set; } = new();
+    public Dictionary<string, string> Headers { get; set; } = [];
 }
 

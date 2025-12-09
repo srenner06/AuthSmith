@@ -242,11 +242,11 @@ public class AuthorizationServiceTests : TestBase
         {
             UserId = user.Id,
             ApplicationKey = "testapp",
-            Checks = new List<PermissionCheckItemDto>
-            {
+            Checks =
+            [
                 new() { Module = "Catalog", Action = "Read" },
                 new() { Module = "Catalog", Action = "Write" }
-            }
+            ]
         };
 
         // Act

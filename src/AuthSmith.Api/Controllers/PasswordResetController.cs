@@ -51,8 +51,7 @@ public class PasswordResetController : ControllerBase
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK, "text/html")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ShowPasswordResetFormAsync(
-        [FromQuery] string token,
-        CancellationToken cancellationToken)
+        [FromQuery] string token)
     {
         // For now, return a simple HTML page that instructs users to use the API
         // In a real implementation, you'd want to serve a proper frontend page

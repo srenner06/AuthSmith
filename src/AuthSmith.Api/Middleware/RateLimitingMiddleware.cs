@@ -20,7 +20,7 @@ public class RateLimitingMiddleware
     private readonly ILogger<RateLimitingMiddleware> _logger;
 
     // In-memory tracking for local rate limiting
-    private static readonly ConcurrentDictionary<string, SlidingWindow> _rateLimits = new();
+    private static readonly ConcurrentDictionary<string, SlidingWindow> RateLimits = new();
 
     public RateLimitingMiddleware(
         RequestDelegate next,
@@ -74,7 +74,7 @@ public class RateLimitingMiddleware
                 clientId, context.Request.Path);
 
             context.Response.StatusCode = (int)HttpStatusCode.TooManyRequests;
-            context.Response.Headers["Retry-After"] = ((int)(resetTime - DateTime.UtcNow).TotalSeconds).ToString();
+            context.Response.Headers.RetryAfter = ((int)(resetTime - DateTime.UtcNow).TotalSeconds).ToString();
 
             await context.Response.WriteAsJsonAsync(new
             {
@@ -182,14 +182,14 @@ public class RateLimitingMiddleware
         return CheckInMemoryRateLimit(clientId, limit, windowSeconds, now, windowStart);
     }
 
-    private (bool Allowed, int Remaining, DateTime ResetTime) CheckInMemoryRateLimit(
+    private static (bool Allowed, int Remaining, DateTime ResetTime) CheckInMemoryRateLimit(
         string clientId,
         int limit,
         int windowSeconds,
         DateTime now,
         DateTime windowStart)
     {
-        var window = _rateLimits.GetOrAdd(clientId, _ => new SlidingWindow());
+        var window = RateLimits.GetOrAdd(clientId, _ => new SlidingWindow());
 
         lock (window)
         {
@@ -234,8 +234,8 @@ public class RateLimitingMiddleware
         {
             var cachedData = await _distributedCache.GetStringAsync(key);
             var timestamps = string.IsNullOrEmpty(cachedData)
-                ? new List<DateTime>()
-                : System.Text.Json.JsonSerializer.Deserialize<List<DateTime>>(cachedData) ?? new List<DateTime>();
+                ? []
+                : System.Text.Json.JsonSerializer.Deserialize<List<DateTime>>(cachedData) ?? [];
 
             // Remove expired timestamps
             timestamps.RemoveAll(t => t < windowStart);
@@ -269,9 +269,9 @@ public class RateLimitingMiddleware
         }
     }
 
-    private class SlidingWindow
+    private sealed class SlidingWindow
     {
-        public List<DateTime> Timestamps { get; } = new();
+        public List<DateTime> Timestamps { get; } = [];
     }
 }
 
