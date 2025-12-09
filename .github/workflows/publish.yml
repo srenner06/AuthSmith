@@ -16,8 +16,32 @@ env:
   CONTEXT: .
 
 jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore -c Release
+
+      - name: Run tests
+        run: dotnet test --no-build -c Release --verbosity normal
+
   docker:
     runs-on: ubuntu-latest
+    needs: build-and-test
+    outputs:
+      version: ${{ steps.vars.outputs.version }}
+      raw_tag: ${{ steps.vars.outputs.raw_tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -104,8 +128,104 @@ jobs:
 
           ls -lah rel
 
+      - name: Upload Docker artifacts for release
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-artifacts
+          path: rel/
+          retention-days: 1
+
+  nuget:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Derive version from tag
+        id: vars
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            RAW_TAG="${GITHUB_REF_NAME}"
+            VERSION="${RAW_TAG#v}"
+          else
+            RAW_TAG="manual-${GITHUB_RUN_NUMBER}"
+            VERSION="${RAW_TAG}"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Update package versions
+        shell: bash
+        run: |
+          VERSION="${{ steps.vars.outputs.version }}"
+          sed -i "s/<Version>.*<\/Version>/<Version>${VERSION}<\/Version>/" src/AuthSmith.Sdk/AuthSmith.Sdk.csproj
+          sed -i "s/<Version>.*<\/Version>/<Version>${VERSION}<\/Version>/" src/AuthSmith.Contracts/AuthSmith.Contracts.csproj
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build packages
+        run: |
+          dotnet build src/AuthSmith.Contracts/AuthSmith.Contracts.csproj -c Release --no-restore
+          dotnet build src/AuthSmith.Sdk/AuthSmith.Sdk.csproj -c Release --no-restore
+
+      - name: Pack NuGet packages
+        run: |
+          dotnet pack src/AuthSmith.Contracts/AuthSmith.Contracts.csproj -c Release --no-build -o ./nupkgs
+          dotnet pack src/AuthSmith.Sdk/AuthSmith.Sdk.csproj -c Release --no-build -o ./nupkgs
+
+      - name: List packages
+        run: ls -lah ./nupkgs
+
+      - name: Push to NuGet
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          dotnet nuget push "./nupkgs/*.nupkg" \
+            --api-key "$NUGET_API_KEY" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+      - name: Upload NuGet artifacts for release
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-artifacts
+          path: nupkgs/
+          retention-days: 1
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [docker, nuget]
+    if: github.ref_type == 'tag'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Docker artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-artifacts
+          path: rel/
+
+      - name: Download NuGet artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-artifacts
+          path: nupkgs/
+
       - name: Generate changelog for current tag
-        if: github.ref_type == 'tag'
         id: cliff
         uses: orhun/git-cliff-action@v4
         with:
@@ -120,34 +240,28 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          TAG="${{ steps.vars.outputs.raw_tag }}"
+          TAG="${{ needs.docker.outputs.raw_tag }}"
           TITLE="${{ env.NAME }} ${TAG}"
 
           # Prepare release notes
-          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            NOTES="${{ steps.cliff.outputs.content }}"
-          else
-            NOTES="Manual release ${TAG}"
-          fi
+          NOTES="${{ steps.cliff.outputs.content }}"
 
           # Create or update release
           if gh release view "$TAG" &>/dev/null; then
-            if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-              printf "%s" "$NOTES" | gh release edit "$TAG" --title "$TITLE" --draft=false --notes-file -
-            else
-              gh release edit "$TAG" --title "$TITLE" --draft=false
-            fi
+            printf "%s" "$NOTES" | gh release edit "$TAG" --title "$TITLE" --draft=false --notes-file -
           else
-            if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-              printf "%s" "$NOTES" | gh release create "$TAG" --title "$TITLE" --notes-file -
-            else
-              gh release create "$TAG" --title "$TITLE" --notes "Manual release $TAG"
-            fi
+            printf "%s" "$NOTES" | gh release create "$TAG" --title "$TITLE" --notes-file -
           fi
 
-          # Upload assets
+          # Upload Docker assets
           shopt -s nullglob
-          FILES=( rel/*.tar.gz rel/*.sha256 )
-          if [ ${#FILES[@]} -gt 0 ]; then
-            gh release upload "$TAG" "${FILES[@]}" --clobber
+          DOCKER_FILES=( rel/*.tar.gz rel/*.sha256 )
+          if [ ${#DOCKER_FILES[@]} -gt 0 ]; then
+            gh release upload "$TAG" "${DOCKER_FILES[@]}" --clobber
+          fi
+
+          # Upload NuGet packages
+          NUGET_FILES=( nupkgs/*.nupkg nupkgs/*.snupkg )
+          if [ ${#NUGET_FILES[@]} -gt 0 ]; then
+            gh release upload "$TAG" "${NUGET_FILES[@]}" --clobber
           fi
